@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deploy Railway - Quadro Obras</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px 15px 0 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .progress-bar {
+            background: #f0f0f0;
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .steps {
+            background: white;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .step {
+            padding: 30px;
+            border-bottom: 2px solid #f0f0f0;
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .step-number {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-right: 15px;
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .step-title {
+            font-size: 24px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .step-content {
+            margin-left: 65px;
+        }
+
+        .instruction {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .instruction h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .instruction ol {
+            margin-left: 20px;
+        }
+
+        .instruction li {
+            margin: 10px 0;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .code-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .code-label {
+            color: #4ec9b0;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .code-line {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .var-name {
+            color: #4fc1ff;
+        }
+
+        .var-value {
+            color: #ce9178;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .copy-btn.copied {
+            background: #48bb78;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+
+        .icon {
+            font-size: 20px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .input-group {
+            margin: 20px 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checklist {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .checklist-item {
+            padding: 10px;
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .checklist-item:hover {
+            background: #fff;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .summary h2 {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+
+        .summary p {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
+        .summary .url {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 16px;
+            word-break: break-all;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: white;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Deploy no Railway</h1>
+            <p>Sistema de Quadro de Obras - Guia Passo a Passo</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+        </div>
+
+        <div class="steps">
+            <!-- STEP 1: GITHUB -->
+            <div class="step active" id="step1">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Criar Repositório no GitHub</div>
+                </div>
+                <div class="step-content">
+                    <div class="instruction">
+                        <h3>📦 Configuração do Repositório</h3>
+                        <ol>
+                            <li>Clique no botão abaixo para abrir o GitHub</li>
+                            <li>Faça login (se necessário)</li>
+                            <li>Nome do repositório: <strong>quadro-obras-sistema</strong></li>
+                            <li>Visibilidade: <strong>Privado</strong> (recomendado)</li>
+                            <li><strong>NÃO</strong> marque "Initialize with README"</li>
+                            <li>Clique em <strong>"Create repository"</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <span class="icon">ℹ️</span>
+                        <span>Mantenha a página do GitHub aberta! Você vai precisar copiar seu usuário.</span>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="openGithub()">
+                        🌐 Abrir GitHub
+                    </button>
+
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" disabled>← Anterior</button>
+                        <button class="btn btn-primary" onclick="nextStep(2)">Próximo →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: PUSH -->
+            <div class="step" id="step2">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Enviar Código para GitHub</div>
+                </div>
+                <div class="step-content">
+                    <div class="instruction">
+                        <h3>📤 Push do Código</h3>
+                        <p>Digite seu <strong>usuário do GitHub</strong> abaixo:</p>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Usuário do GitHub</label>
+                        <input type="text" id="githubUser" placeholder="Ex: joaosilva" 
+                               onkeypress="if(event.key==='Enter') pushToGithub()">
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <span class="icon">⚠️</span>
+                        <span>Certifique-se de que o repositório foi criado antes de continuar!</span>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="pushToGithub()">
+                        🚀 Enviar Código
+                    </button>
+
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="prevStep(1)">← Anterior</button>
+                        <button class="btn btn-primary" id="btn-step3" disabled onclick="nextStep(3)">Próximo →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: RAILWAY LOGIN -->
+            <div class="step" id="step3">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Login no Railway</div>
+                </div>
+                <div class="step-content">
+                    <div class="instruction">
+                        <h3>🔐 Criar Conta / Login</h3>
+                        <ol>
+                            <li>Clique no botão abaixo para abrir o Railway</li>
+                            <li>Clique em <strong>"Login"</strong></li>
+                            <li>Escolha <strong>"Login with GitHub"</strong></li>
+                            <li>Autorize o Railway a acessar sua conta GitHub</li>
+                            <li>Aguarde carregar o dashboard</li>
+                        </ol>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <span class="icon">💡</span>
+                        <span>Usar GitHub é mais rápido e facilita o deploy automático!</span>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="openRailway()">
+                        🌐 Abrir Railway
+                    </button>
+
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="prevStep(2)">← Anterior</button>
+                        <button class="btn btn-primary" onclick="nextStep(4)">Próximo →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 4: CREATE PROJECT -->
+            <div class="step" id="step4">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <div class="step-title">Criar Projeto no Railway</div>
+                </div>
+                <div class="step-content">
+                    <div class="instruction">
+                        <h3>🎯 Novo Projeto</h3>
+                        <ol>
+                            <li>No dashboard do Railway, clique em <strong>"New Project"</strong></li>
+                            <li>Escolha <strong>"Deploy from GitHub repo"</strong></li>
+                            <li>Procure e selecione: <strong>quadro-obras-sistema</strong></li>
+                            <li>Branch: <strong>main</strong></li>
+                            <li>Clique em <strong>"Deploy Now"</strong></li>
+                        </ol>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <span class="icon">⚠️</span>
+                        <span>O deploy vai FALHAR inicialmente - isso é normal! Faltam as variáveis de ambiente.</span>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <span class="icon">⏱️</span>
+                        <span>O Railway vai instalar dependências (npm install). Aguarde aparecer o projeto na tela.</span>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="openRailwayNew()">
+                        🌐 Criar Projeto
+                    </button>
+
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="prevStep(3)">← Anterior</button>
+                        <button class="btn btn-primary" onclick="nextStep(5)">Próximo →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 5: VARIABLES -->
+            <div class="step" id="step5">
+                <div class="step-header">
+                    <div class="step-number">5</div>
+                    <div class="step-title">Configurar Variáveis</div>
+                </div>
+                <div class="step-content">
+                    <div class="instruction">
+                        <h3>🔧 Variáveis de Ambiente</h3>
+                        <p>No Railway, clique na aba <strong>"Variables"</strong> e adicione cada variável abaixo:</p>
+                    </div>
+
+                    <div class="code-box">
+                        <span class="code-label">PORT</span>
+                        <div class="code-line">4000</div>
+                        <button class="copy-btn" onclick="copyToClipboard('4000', this)">Copiar</button>
+                    </div>
+
+                    <div class="code-box">
+                        <span class="code-label">NODE_ENV</span>
+                        <div class="code-line">production</div>
+                        <button class="copy-btn" onclick="copyToClipboard('production', this)">Copiar</button>
+                    </div>
+
+                    <div class="code-box">
+                        <span class="code-label">SUPABASE_URL</span>
+                        <div class="code-line" id="supabaseUrl">Carregando...</div>
+                        <button class="copy-btn" onclick="copyToClipboard(document.getElementById('supabaseUrl').textContent, this)">Copiar</button>
+                    </div>
+
+                    <div class="code-box">
+                        <span class="code-label">SUPABASE_ANON_KEY</span>
+                        <div class="code-line" id="supabaseKey" style="word-break: break-all;">Carregando...</div>
+                        <button class="copy-btn" onclick="copyToClipboard(document.getElementById('supabaseKey').textContent, this)">Copiar</button>
+                    </div>
+
+                    <div class="code-box">
+                        <span class="code-label">JWT_SECRET</span>
+                        <div class="code-line" id="jwtSecret">Carregando...</div>
+                        <button class="copy-btn" onclick="copyToClipboard(document.getElementById('jwtSecret').textContent, this)">Copiar</button>
+                    </div>
+
+                    <div class="code-box">
+                        <span class="code-label">JWT_EXPIRES_IN</span>
+                        <div class="code-line">7d</div>
+                        <button class="copy-btn" onclick="copyToClipboard('7d', this)">Copiar</button>
+                    </div>
+
+                    <div class="code-box">
+                        <span class="code-label">CORS_ORIGIN</span>
+                        <div class="code-line">*</div>
+                        <button class="copy-btn" onclick="copyToClipboard('*', this)">Copiar</button>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <span class="icon">💡</span>
+                        <span>Após adicionar TODAS as variáveis, o Railway vai reiniciar automaticamente!</span>
+                    </div>
+
+                    <div class="checklist">
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check1">
+                            <label for="check1">PORT = 4000</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check2">
+                            <label for="check2">NODE_ENV = production</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check3">
+                            <label for="check3">SUPABASE_URL</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check4">
+                            <label for="check4">SUPABASE_ANON_KEY</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check5">
+                            <label for="check5">JWT_SECRET</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check6">
+                            <label for="check6">JWT_EXPIRES_IN = 7d</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check7">
+                            <label for="check7">CORS_ORIGIN = *</label>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="prevStep(4)">← Anterior</button>
+                        <button class="btn btn-primary" onclick="nextStep(6)">Próximo →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 6: URL -->
+            <div class="step" id="step6">
+                <div class="step-header">
+                    <div class="step-number">6</div>
+                    <div class="step-title">Obter URL e Testar</div>
+                </div>
+                <div class="step-content">
+                    <div class="instruction">
+                        <h3>🌐 Gerar Domínio Público</h3>
+                        <ol>
+                            <li>No Railway, vá em <strong>"Settings"</strong></li>
+                            <li>Role até a seção <strong>"Domains"</strong></li>
+                            <li>Clique em <strong>"Generate Domain"</strong></li>
+                            <li>Copie a URL gerada (formato: *.railway.app)</li>
+                            <li>Cole a URL no campo abaixo</li>
+                        </ol>
+                    </div>
+
+                    <div class="input-group">
+                        <label>URL do Railway</label>
+                        <input type="text" id="railwayUrl" placeholder="https://seu-projeto.railway.app">
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <span class="icon">⚠️</span>
+                        <span><strong>IMPORTANTE:</strong> Após obter a URL, volte em "Variables" e atualize o CORS_ORIGIN de * para a URL completa!</span>
+                    </div>
+
+                    <div class="instruction">
+                        <h3>✅ Checklist Final</h3>
+                    </div>
+
+                    <div class="checklist">
+                        <div class="checklist-item">
+                            <input type="checkbox" id="final1">
+                            <label for="final1">Domínio gerado no Railway</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="final2">
+                            <label for="final2">CORS_ORIGIN atualizado com a URL</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="final3">
+                            <label for="final3">Deploy finalizado (status verde)</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="final4">
+                            <label for="final4">Página de login abre</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="final5">
+                            <label for="final5">Login funciona (teste@teste.com)</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="final6">
+                            <label for="final6">Projetos aparecem na tela</label>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="testSystem()">
+                        🧪 Abrir Sistema
+                    </button>
+
+                    <div class="btn-group">
+                        <button class="btn btn-secondary" onclick="prevStep(5)">← Anterior</button>
+                        <button class="btn btn-primary" onclick="finishDeploy()">🎉 Finalizar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FINAL -->
+            <div class="step" id="stepFinal">
+                <div class="summary">
+                    <h2>🎉 Deploy Concluído!</h2>
+                    <p>Seu sistema está online e funcionando 24/7!</p>
+                    <div class="url" id="finalUrl">Aguardando URL...</div>
+                    
+                    <div class="alert alert-success" style="text-align: left; margin: 20px 0;">
+                        <span class="icon">✅</span>
+                        <div>
+                            <strong>O que foi feito:</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>✅ Código enviado para GitHub</li>
+                                <li>✅ Projeto criado no Railway</li>
+                                <li>✅ Variáveis de ambiente configuradas</li>
+                                <li>✅ Deploy realizado com sucesso</li>
+                                <li>✅ URL pública gerada</li>
+                                <li>✅ Sistema testado e funcionando</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin: 20px 0; text-align: left;">
+                        <h3 style="margin-bottom: 15px;">📋 Próximos Passos</h3>
+                        <ul style="margin-left: 20px; line-height: 2;">
+                            <li>🏪 Organizar projetos com tag "IMPORTADO"</li>
+                            <li>👥 Convidar usuários da equipe</li>
+                            <li>🎨 Personalizar lojas e status</li>
+                            <li>🌐 Configurar domínio próprio (opcional)</li>
+                            <li>📊 Começar a usar o sistema!</li>
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-primary" style="background: white; color: #667eea; margin-top: 20px;" onclick="location.reload()">
+                        🔄 Fazer Novo Deploy
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Quadro de Obras © 2025 - Sistema de Gestão de Projetos</p>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let githubUsername = '';
+        let railwayUrlFinal = '';
+
+        // Atualizar barra de progresso
+        function updateProgress() {
+            const progress = ((currentStep - 1) / 6) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+        }
+
+        // Próximo passo
+        function nextStep(step) {
+            document.getElementById('step' + currentStep).classList.remove('active');
+            currentStep = step;
+            document.getElementById('step' + currentStep).classList.add('active');
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Passo anterior
+        function prevStep(step) {
+            document.getElementById('step' + currentStep).classList.remove('active');
+            currentStep = step;
+            document.getElementById('step' + currentStep).classList.add('active');
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Abrir GitHub
+        function openGithub() {
+            window.open('https://github.com/new', '_blank');
+        }
+
+        // Abrir Railway
+        function openRailway() {
+            window.open('https://railway.app/login', '_blank');
+        }
+
+        // Abrir Railway New Project
+        function openRailwayNew() {
+            window.open('https://railway.app/new', '_blank');
+        }
+
+        // Push para GitHub
+        async function pushToGithub() {
+            const user = document.getElementById('githubUser').value.trim();
+            if (!user) {
+                alert('❌ Digite seu usuário do GitHub!');
+                return;
+            }
+
+            githubUsername = user;
+            
+            // Simular comando (na prática, o usuário precisa executar no terminal)
+            alert(`📋 Execute no PowerShell:\n\ngit remote remove origin\ngit remote add origin https://github.com/${user}/quadro-obras-sistema.git\ngit push -u origin main`);
+            
+            // Habilitar próximo passo
+            document.getElementById('btn-step3').disabled = false;
+        }
+
+        // Copiar para clipboard
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                button.textContent = '✓ Copiado!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // Testar sistema
+        function testSystem() {
+            const url = document.getElementById('railwayUrl').value.trim();
+            if (!url) {
+                alert('❌ Digite a URL do Railway primeiro!');
+                return;
+            }
+            railwayUrlFinal = url;
+            window.open(url, '_blank');
+        }
+
+        // Finalizar deploy
+        function finishDeploy() {
+            const url = document.getElementById('railwayUrl').value.trim();
+            if (!url) {
+                alert('❌ Digite a URL do Railway primeiro!');
+                return;
+            }
+            
+            railwayUrlFinal = url;
+            document.getElementById('finalUrl').textContent = url;
+            
+            document.getElementById('step' + currentStep).classList.remove('active');
+            document.getElementById('stepFinal').classList.add('active');
+            document.getElementById('progressBar').style.width = '100%';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Carregar variáveis do .env ao iniciar
+        window.onload = function() {
+            // Tentar ler .env (isso não vai funcionar diretamente no browser)
+            // O usuário vai precisar ter os valores visíveis
+            
+            // Placeholder - o usuário verá "Carregando..." e precisará verificar manualmente
+            // ou você pode criar um endpoint no server.js que retorna essas variáveis
+            
+            setTimeout(() => {
+                document.getElementById('supabaseUrl').textContent = 'COLE AQUI O VALOR DO SEU .env';
+                document.getElementById('supabaseKey').textContent = 'COLE AQUI O VALOR DO SEU .env';
+                document.getElementById('jwtSecret').textContent = 'COLE AQUI O VALOR DO SEU .env';
+            }, 500);
+        };
+    </script>
+</body>
+</html>

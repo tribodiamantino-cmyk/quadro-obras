@@ -997,8 +997,8 @@ app.get('/api/audit-logs', authenticate, async (req, res) => {
 // Criar novo usuário (apenas admins)
 app.post('/api/users', authenticate, async (req, res) => {
   try {
-    // Verificar se é admin
-    if (req.user.role !== 'admin') {
+    // Verificar se é admin (aceita maiúsculo e minúsculo)
+    if (req.user.role?.toUpperCase() !== 'ADMIN') {
       return res.status(403).json({ message: 'Apenas administradores podem criar usuários' });
     }
 
@@ -1008,8 +1008,9 @@ app.post('/api/users', authenticate, async (req, res) => {
       return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
     }
 
-    // Validar role
-    if (!['admin', 'member', 'viewer'].includes(role)) {
+    // Validar role (aceita maiúsculo e minúsculo)
+    const roleUpper = role.toUpperCase();
+    if (!['ADMIN', 'MEMBER', 'VIEWER'].includes(roleUpper)) {
       return res.status(400).json({ message: 'Permissão inválida' });
     }
 
@@ -1034,7 +1035,7 @@ app.post('/api/users', authenticate, async (req, res) => {
         name,
         email: email.toLowerCase(),
         password: hashedPassword,
-        role,
+        role: roleUpper, // Usar role em maiúsculo
         organization_id: req.user.organizationId,
         active: true
       })
