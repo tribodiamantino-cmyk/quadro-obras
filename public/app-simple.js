@@ -307,31 +307,40 @@ function renderStatusFilter() {
   statusFilterAside.value = currentValue;
 }
 
-// Filtro de loja - listener COM DEBOUNCE
+// Filtro de loja - listener COM DEBOUNCE (compatível iOS)
 if (storeFilterAside) {
   const debouncedFilter = debounce(() => loadState(), 300);
-  storeFilterAside.addEventListener('change', () => {
+  const handleStoreChange = () => {
     selectedStoreId = storeFilterAside.value;
     debouncedFilter();
-  });
+  };
+  // iOS Safari pode não disparar 'change', então usar 'input' também
+  storeFilterAside.addEventListener('change', handleStoreChange);
+  storeFilterAside.addEventListener('input', handleStoreChange);
 }
 
-// Filtro de status - listener COM DEBOUNCE
+// Filtro de status - listener COM DEBOUNCE (compatível iOS)
 if (statusFilterAside) {
   const debouncedFilter = debounce(() => loadState(), 300);
-  statusFilterAside.addEventListener('change', () => {
+  const handleStatusChange = () => {
     selectedStatusId = statusFilterAside.value;
     debouncedFilter();
-  });
+  };
+  // iOS Safari pode não disparar 'change', então usar 'input' também
+  statusFilterAside.addEventListener('change', handleStatusChange);
+  statusFilterAside.addEventListener('input', handleStatusChange);
 }
 
-// Filtro de categoria - listener COM DEBOUNCE
+// Filtro de categoria - listener COM DEBOUNCE (compatível iOS)
 if (categoryFilterAside) {
   const debouncedFilter = debounce(() => loadState(), 300);
-  categoryFilterAside.addEventListener('change', () => {
+  const handleCategoryChange = () => {
     selectedCategory = categoryFilterAside.value;
     debouncedFilter();
-  });
+  };
+  // iOS Safari pode não disparar 'change', então usar 'input' também
+  categoryFilterAside.addEventListener('change', handleCategoryChange);
+  categoryFilterAside.addEventListener('input', handleCategoryChange);
 }
 
 // Checkbox mostrar arquivados - listener COM DEBOUNCE
@@ -373,6 +382,7 @@ function renderProjectsList() {
         <!-- Dropdown de status -->
         <select 
           class="status-quick-select" 
+          data-project-id="${p.id}"
           onchange="event.stopPropagation(); updateProjectStatus('${p.id}', this.value)"
           onclick="event.stopPropagation()"
           style="width: 100%; font-size: 11px; padding: 4px; background: #1e293b; border: 1px solid ${statusColor}; color: ${statusColor}; border-radius: 4px; margin-bottom: 8px;">
@@ -397,6 +407,20 @@ function renderProjectsList() {
       </div>
     `;
   }).join('');
+  
+  // Fix para iOS Safari: adicionar evento 'input' aos selects de status
+  // iOS pode não disparar 'onchange' corretamente
+  setTimeout(() => {
+    document.querySelectorAll('.status-quick-select').forEach(select => {
+      select.addEventListener('input', (e) => {
+        e.stopPropagation();
+        const projectId = select.dataset.projectId;
+        if (projectId) {
+          updateProjectStatus(projectId, select.value);
+        }
+      });
+    });
+  }, 0);
 }
 
 // Renderizar select de projetos
@@ -510,6 +534,9 @@ function renderDetails() {
   ).join('');
   document.getElementById('detail-store').innerHTML = `
     <select 
+      class="detail-field-select"
+      data-project-id="${p.id}"
+      data-field="store_id"
       onchange="updateProjectField('${p.id}', 'store_id', this.value)"
       style="width: 100%; background: #1e293b; border: 1px solid #34495e; color: #ecf0f1; padding: 6px; border-radius: 4px; font-size: 12px;">
       <option value="">Selecione...</option>
@@ -523,6 +550,9 @@ function renderDetails() {
   ).join('');
   document.getElementById('detail-status').innerHTML = `
     <select 
+      class="detail-field-select"
+      data-project-id="${p.id}"
+      data-field="work_status_id"
       onchange="updateProjectField('${p.id}', 'work_status_id', this.value)"
       style="width: 100%; background: #1e293b; border: 1px solid #34495e; color: #ecf0f1; padding: 6px; border-radius: 4px; font-size: 12px;">
       <option value="">Selecione...</option>
@@ -533,6 +563,9 @@ function renderDetails() {
   // Categoria (select)
   document.getElementById('detail-category').innerHTML = `
     <select 
+      class="detail-field-select"
+      data-project-id="${p.id}"
+      data-field="category"
       onchange="updateProjectField('${p.id}', 'category', this.value)"
       style="width: 100%; background: #1e293b; border: 1px solid #34495e; color: #ecf0f1; padding: 6px; border-radius: 4px; font-size: 12px;">
       <option value="nova" ${p.category === 'nova' ? 'selected' : ''}>🏗️ Nova Obra</option>
@@ -546,6 +579,9 @@ function renderDetails() {
   ).join('');
   document.getElementById('detail-integrator').innerHTML = `
     <select 
+      class="detail-field-select"
+      data-project-id="${p.id}"
+      data-field="integrator_id"
       onchange="updateProjectField('${p.id}', 'integrator_id', this.value)"
       style="width: 100%; background: #1e293b; border: 1px solid #34495e; color: #ecf0f1; padding: 6px; border-radius: 4px; font-size: 12px;">
       <option value="">Selecione...</option>
@@ -559,6 +595,9 @@ function renderDetails() {
   ).join('');
   document.getElementById('detail-assembler').innerHTML = `
     <select 
+      class="detail-field-select"
+      data-project-id="${p.id}"
+      data-field="assembler_id"
       onchange="updateProjectField('${p.id}', 'assembler_id', this.value)"
       style="width: 100%; background: #1e293b; border: 1px solid #34495e; color: #ecf0f1; padding: 6px; border-radius: 4px; font-size: 12px;">
       <option value="">Selecione...</option>
@@ -572,6 +611,9 @@ function renderDetails() {
   ).join('');
   document.getElementById('detail-electrician').innerHTML = `
     <select 
+      class="detail-field-select"
+      data-project-id="${p.id}"
+      data-field="electrician_id"
       onchange="updateProjectField('${p.id}', 'electrician_id', this.value)"
       style="width: 100%; background: #1e293b; border: 1px solid #34495e; color: #ecf0f1; padding: 6px; border-radius: 4px; font-size: 12px;">
       <option value="">Selecione...</option>
@@ -614,6 +656,20 @@ function renderDetails() {
   
   // Observações (editável)
   projectDetails.value = p.details_text || '';
+  
+  // Fix para iOS Safari: adicionar evento 'input' aos selects de detalhes
+  // iOS pode não disparar 'onchange' corretamente
+  setTimeout(() => {
+    document.querySelectorAll('.detail-field-select').forEach(select => {
+      select.addEventListener('input', (e) => {
+        const projectId = select.dataset.projectId;
+        const field = select.dataset.field;
+        if (projectId && field) {
+          updateProjectField(projectId, field, select.value);
+        }
+      });
+    });
+  }, 0);
 }
 
 // Helper para formatar datas
