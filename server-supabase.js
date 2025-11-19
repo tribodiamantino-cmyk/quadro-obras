@@ -1141,6 +1141,63 @@ app.put('/api/users/:id', authenticate, async (req, res) => {
   }
 });
 
+// Deletar usuário (apenas admins)
+app.delete('/api/users/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Verificar se é admin
+    if (req.user.role?.toUpperCase() !== 'ADMIN') {
+      return res.status(403).json({ message: 'Apenas administradores podem excluir usuários' });
+    }
+
+    // Não pode deletar a si mesmo
+    if (id === req.user.id) {
+      return res.status(400).json({ message: 'Você não pode excluir sua própria conta' });
+    }
+
+    // Buscar usuário antes de deletar (para log)
+    const { data: user } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id)
+      .eq('organization_id', req.user.organizationId)
+      .single();
+
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    // Deletar usuário
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', id)
+      .eq('organization_id', req.user.organizationId);
+
+    if (error) throw error;
+
+    // Log de auditoria
+    await createAuditLog(
+      req.user.id,
+      req.user.organizationId,
+      'delete',
+      'user',
+      user.id,
+      user.name,
+      { name: user.name, email: user.email, role: user.role },
+      null,
+      req
+    );
+
+    io.to(req.user.organizationId).emit('userDeleted', { id });
+    res.json({ message: 'Usuário excluído com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar usuário:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Listar usuários da organização
 app.get('/api/users', authenticate, async (req, res) => {
   try {

@@ -269,19 +269,25 @@ async function loadUsers() {
 }
 
 function renderUsers() {
+  const currentUser = JSON.parse(localStorage.getItem('user'));
   const list = document.getElementById('users-list');
   list.innerHTML = users.map(u => {
     const roleLabels = {
+      'ADMIN': '🔑 Admin',
       'admin': '🔑 Admin',
+      'MEMBER': '✏️ Membro',
       'member': '✏️ Membro',
+      'VIEWER': '👁️ Visualizador',
       'viewer': '👁️ Visualizador'
     };
     
+    const isCurrentUser = currentUser && currentUser.id === u.id;
+    
     return `
       <tr>
-        <td>${u.name}</td>
+        <td>${u.name}${isCurrentUser ? ' <span style="color: #22c55e;">(você)</span>' : ''}</td>
         <td>${u.email}</td>
-        <td><span class="role-badge role-${u.role}">${roleLabels[u.role] || u.role}</span></td>
+        <td><span class="role-badge role-${u.role?.toLowerCase()}">${roleLabels[u.role] || u.role}</span></td>
         <td>
           <span class="status-badge status-${u.active ? 'active' : 'inactive'}">
             ${u.active ? '✓ Ativo' : '✗ Inativo'}
@@ -292,6 +298,9 @@ function renderUsers() {
           ${u.active ? 
             `<button class="btn-icon delete" onclick="toggleUserStatus('${u.id}', false)" title="Desativar">⊘</button>` :
             `<button class="btn-icon" onclick="toggleUserStatus('${u.id}', true)" title="Ativar">✓</button>`
+          }
+          ${!isCurrentUser ? 
+            `<button class="btn-icon delete" onclick="deleteUser('${u.id}', '${u.name}')" title="Excluir permanentemente">🗑️</button>` : ''
           }
         </td>
       </tr>
@@ -347,6 +356,27 @@ window.toggleUserStatus = async function(userId, active) {
   } catch (error) {
     console.error(`Erro ao ${action} usuário:`, error);
     alert(`Erro ao ${action} usuário`);
+  }
+};
+
+window.deleteUser = async function(userId, userName) {
+  if (!confirm(`⚠️ ATENÇÃO: Tem certeza que deseja EXCLUIR PERMANENTEMENTE o usuário "${userName}"?\n\nEsta ação NÃO pode ser desfeita!`)) return;
+  
+  try {
+    const res = await api(`/api/users/${userId}`, {
+      method: 'DELETE'
+    });
+    
+    if (res.ok) {
+      alert(`✅ Usuário "${userName}" excluído com sucesso!`);
+      await loadUsers();
+    } else {
+      const error = await res.json();
+      alert(error.message || 'Erro ao excluir usuário');
+    }
+  } catch (error) {
+    console.error('Erro ao excluir usuário:', error);
+    alert('Erro ao excluir usuário');
   }
 };
 
