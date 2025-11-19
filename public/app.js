@@ -1,13 +1,6 @@
 (function(){
   'use strict';
 
-  // Verificar autenticação
-  const token = localStorage.getItem('token');
-  if (!token) {
-    window.location.href = '/login.html';
-    return;
-  }
-
   // Fluxo de status
   const STATUSES = ['Criado','Em separação','Pendencia','Em romaneio','Entregue'];
 

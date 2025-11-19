@@ -1,11 +1,4 @@
 // Sistema simplificado que funciona com Supabase
-// Verificar autenticação
-const token = localStorage.getItem('token');
-if (!token) {
-  window.location.href = '/login.html';
-  throw new Error('Not authenticated');
-}
-
 const socket = io();
 let state = { 
   projects: [], 
