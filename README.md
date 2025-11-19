@@ -1,47 +1,91 @@
-# 🛠️ Quadro de Acompanhamento de Obras - v2.0
+# 🛠️ Quadro de Obras - Sistema de Gestão v1.0# 🛠️ Quadro de Acompanhamento de Obras - v2.0
 
-Sistema completo de gerenciamento de obras com autenticação multi-tenant, controle de usuários e banco de dados PostgreSQL.
 
-## 🚀 Principais Funcionalidades
 
-✅ **Autenticação JWT** - Sistema seguro de login/registro  
+Sistema completo de gestão de obras com controle de tarefas, usuários e integração em tempo real.Sistema completo de gerenciamento de obras com autenticação multi-tenant, controle de usuários e banco de dados PostgreSQL.
+
+
+
+## 🚀 Deploy em Produção## 🚀 Principais Funcionalidades
+
+
+
+**URL:** https://quadro-obras-production.up.railway.app✅ **Autenticação JWT** - Sistema seguro de login/registro  
+
 ✅ **Multi-tenant** - Múltiplas organizações isoladas  
-✅ **Controle de Acesso** - Roles: ADMIN, MEMBER, VIEWER  
+
+**Credenciais:** `admin@admin.com` / `admin123`✅ **Controle de Acesso** - Roles: ADMIN, MEMBER, VIEWER  
+
 ✅ **PostgreSQL** - Banco de dados robusto e escalável  
-✅ **Real-time** - Atualizações ao vivo via Socket.IO  
+
+## ✨ Funcionalidades✅ **Real-time** - Atualizações ao vivo via Socket.IO  
+
 ✅ **Kanban** - Quadro visual de tarefas  
-✅ **Histórico** - Rastreamento completo de mudanças  
 
----
+- ✅ Gestão completa de projetos e tarefas✅ **Histórico** - Rastreamento completo de mudanças  
 
-## 📋 Pré-requisitos
+- ✅ Sistema Kanban com 5 status
+
+- ✅ Gerenciamento de usuários (3 níveis)---
+
+- ✅ Atualização em tempo real
+
+- ✅ Logs de auditoria## 📋 Pré-requisitos
+
+- ✅ Multi-tenant
 
 - **Node.js** 18+ ([Download](https://nodejs.org/))
-- **PostgreSQL** 14+ ou conta em:
+
+## 📦 Instalação- **PostgreSQL** 14+ ou conta em:
+
   - [Supabase](https://supabase.com) (recomendado - grátis)
-  - [Neon](https://neon.tech) (alternativa grátis)
-  - Docker local
 
----
+```bash  - [Neon](https://neon.tech) (alternativa grátis)
 
-## ⚡ Quick Start
+npm install  - Docker local
 
-### 1️⃣ Instalar Dependências
+cp .env.example .env
 
-```bash
-npm install
-```
+# Configure .env---
+
+npm run dev
+
+```## ⚡ Quick Start
+
+
+
+## 🔧 Tecnologias### 1️⃣ Instalar Dependências
+
+
+
+- Node.js + Express```bash
+
+- Supabase (PostgreSQL)npm install
+
+- Socket.IO```
+
+- JWT
 
 ### 2️⃣ Configurar Banco de Dados
 
+## 📝 Scripts
+
 #### Opção A: Supabase (Recomendado)
 
-1. Criar conta em https://supabase.com
-2. Criar novo projeto
-3. Copiar a **Connection String** em: `Settings > Database > Connection string > URI`
-4. Substituir `[YOUR-PASSWORD]` pela senha do projeto
-
 ```bash
+
+npm start                    # Produção1. Criar conta em https://supabase.com
+
+npm run dev                  # Desenvolvimento  2. Criar novo projeto
+
+node scripts/add-user.js     # Adicionar usuário3. Copiar a **Connection String** em: `Settings > Database > Connection string > URI`
+
+```4. Substituir `[YOUR-PASSWORD]` pela senha do projeto
+
+
+
+Veja documentação completa em `docs/````bash
+
 # Exemplo de URL do Supabase
 DATABASE_URL="postgresql://postgres:SUA_SENHA@db.xxxxx.supabase.co:5432/postgres"
 ```
