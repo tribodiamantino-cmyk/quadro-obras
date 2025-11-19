@@ -5,7 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Quadro de Obras — Multiusuário</title>
   <link rel="stylesheet" href="style.css" />
-  <script>window.APP_VERSION='v1.0.9'</script>
+  <script>
+    // Verificar autenticação ANTES de carregar a página
+    (function() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.replace('/login.html');
+      }
+    })();
+    window.APP_VERSION='v1.0.9';
+  </script>
 </head>
 <body>
   <header>

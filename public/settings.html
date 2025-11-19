@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Configurações - Quadro de Obras</title>
   <link rel="stylesheet" href="style.css" />
+  <script>
+    // Verificar autenticação ANTES de carregar a página
+    (function() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.replace('/login.html');
+      }
+    })();
+  </script>
   <style>
     .settings-container {
       max-width: 1200px;
