@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Configurações - Quadro de Obras</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .settings-container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #2c3e50;
+      margin-bottom: 30px;
+    }
+    
+    .tab {
+      padding: 15px 30px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      color: #95a5a6;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+    
+    .tab:hover {
+      color: #3498db;
+    }
+    
+    .tab.active {
+      color: #3498db;
+      border-bottom: 3px solid #3498db;
+      margin-bottom: -2px;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .settings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .settings-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #2c3e50;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .settings-table th,
+    .settings-table td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid #34495e;
+    }
+    
+    .settings-table th {
+      background: #34495e;
+      font-weight: 600;
+      color: #ecf0f1;
+    }
+    
+    .settings-table tr:hover {
+      background: #34495e;
+    }
+    
+    .color-badge {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+      border: 2px solid #ecf0f1;
+    }
+    
+    .status-badge {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .status-active {
+      background: #27ae60;
+      color: white;
+    }
+    
+    .status-inactive {
+      background: #95a5a6;
+      color: white;
+    }
+    
+    .btn-icon {
+      background: none;
+      border: none;
+      color: #3498db;
+      cursor: pointer;
+      font-size: 18px;
+      margin: 0 5px;
+      transition: color 0.3s;
+    }
+    
+    .btn-icon:hover {
+      color: #2980b9;
+    }
+    
+    .btn-icon.delete {
+      color: #e74c3c;
+    }
+    
+    .btn-icon.delete:hover {
+      color: #c0392b;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+    }
+    
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-content {
+      background: #2c3e50;
+      padding: 30px;
+      border-radius: 8px;
+      max-width: 500px;
+      width: 90%;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .modal-header h2 {
+      margin: 0;
+      color: #ecf0f1;
+    }
+    
+    .close-modal {
+      background: none;
+      border: none;
+      color: #95a5a6;
+      font-size: 28px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    
+    .close-modal:hover {
+      color: #ecf0f1;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #ecf0f1;
+      font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      background: #34495e;
+      border: 1px solid #4a5f7f;
+      border-radius: 4px;
+      color: #ecf0f1;
+      font-size: 14px;
+    }
+    
+    .form-group input[type="color"] {
+      height: 50px;
+      cursor: pointer;
+    }
+    
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 30px;
+    }
+    
+    .btn-secondary {
+      background: #95a5a6;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    
+    .btn-secondary:hover {
+      background: #7f8c8d;
+    }
+    
+    .role-badge {
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .role-admin {
+      background: #e74c3c;
+      color: white;
+    }
+    
+    .role-member {
+      background: #3498db;
+      color: white;
+    }
+    
+    .role-viewer {
+      background: #95a5a6;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>⚙️ Configurações</h1>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <a href="/" class="btn-secondary" style="text-decoration: none; display: inline-block;">← Voltar ao Quadro</a>
+      <button onclick="logout()" style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; transition: background 0.3s;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
+        🚪 Sair
+      </button>
+    </div>
+  </header>
+
+  <div class="settings-container">
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="stores">🏪 Lojas</button>
+      <button class="tab" data-tab="statuses">📊 Status de Obras</button>
+      <button class="tab" data-tab="integrators">🏢 Integradoras</button>
+      <button class="tab" data-tab="assemblers">🔧 Montadores</button>
+      <button class="tab" data-tab="electricians">⚡ Eletricistas</button>
+      <button class="tab" data-tab="users">👥 Usuários</button>
+      <button class="tab" data-tab="logs">📋 Logs de Auditoria</button>
+    </div>
+
+    <!-- Tab: Lojas -->
+    <div class="tab-content active" id="stores-tab">
+      <div class="settings-header">
+        <h2>Gerenciar Lojas</h2>
+        <button class="primary" onclick="openStoreModal()">+ Nova Loja</button>
+      </div>
+      <table class="settings-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Código</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="stores-list"></tbody>
+      </table>
+    </div>
+
+    <!-- Tab: Status -->
+    <div class="tab-content" id="statuses-tab">
+      <div class="settings-header">
+        <h2>Status de Obras</h2>
+        <button class="primary" onclick="openStatusModal()">+ Novo Status</button>
+      </div>
+      <table class="settings-table">
+        <thead>
+          <tr>
+            <th>Ordem</th>
+            <th>Nome</th>
+            <th>Cor</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="statuses-list"></tbody>
+      </table>
+    </div>
+
+    <!-- Tab: Integradoras -->
+    <div class="tab-content" id="integrators-tab">
+      <div class="settings-header">
+        <h2>Gerenciar Integradoras</h2>
+        <button class="primary" onclick="openIntegratorModal()">+ Nova Integradora</button>
+      </div>
+      <table class="settings-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="integrators-list"></tbody>
+      </table>
+    </div>
+
+    <!-- Tab: Montadores -->
+    <div class="tab-content" id="assemblers-tab">
+      <div class="settings-header">
+        <h2>Gerenciar Montadores</h2>
+        <button class="primary" onclick="openAssemblerModal()">+ Novo Montador</button>
+      </div>
+      <table class="settings-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="assemblers-list"></tbody>
+      </table>
+    </div>
+
+    <!-- Tab: Eletricistas -->
+    <div class="tab-content" id="electricians-tab">
+      <div class="settings-header">
+        <h2>Gerenciar Eletricistas</h2>
+        <button class="primary" onclick="openElectricianModal()">+ Novo Eletricista</button>
+      </div>
+      <table class="settings-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="electricians-list"></tbody>
+      </table>
+    </div>
+
+    <!-- Tab: Usuários -->
+    <div class="tab-content" id="users-tab">
+      <div class="settings-header">
+        <h2>Gerenciar Usuários</h2>
+        <button class="primary" onclick="openUserModal()">+ Novo Usuário</button>
+      </div>
+      <table class="settings-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Permissão</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="users-list"></tbody>
+      </table>
+    </div>
+
+    <!-- Tab: Logs de Auditoria -->
+    <div class="tab-content" id="logs-tab">
+      <div class="settings-header">
+        <h2>Logs de Auditoria</h2>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <select id="log-user-filter" style="padding: 8px; background: #34495e; border: 1px solid #4a5f7f; color: #ecf0f1; border-radius: 4px;">
+            <option value="">👤 Todos usuários</option>
+          </select>
+          <select id="log-action-filter" style="padding: 8px; background: #34495e; border: 1px solid #4a5f7f; color: #ecf0f1; border-radius: 4px;">
+            <option value="">📝 Todas ações</option>
+            <option value="create">➕ Criar</option>
+            <option value="update">✏️ Editar</option>
+            <option value="delete">🗑️ Excluir</option>
+            <option value="archive">📦 Arquivar</option>
+            <option value="restore">♻️ Restaurar</option>
+          </select>
+          <select id="log-entity-filter" style="padding: 8px; background: #34495e; border: 1px solid #4a5f7f; color: #ecf0f1; border-radius: 4px;">
+            <option value="">📊 Todas entidades</option>
+            <option value="project">🏗️ Obras</option>
+            <option value="task">📋 Tarefas</option>
+            <option value="user">👥 Usuários</option>
+            <option value="store">🏪 Lojas</option>
+            <option value="status">📊 Status</option>
+          </select>
+          <button class="btn-secondary" onclick="loadLogs()" style="padding: 8px 16px;">🔄 Atualizar</button>
+        </div>
+      </div>
+      <table class="settings-table">
+        <thead>
+          <tr>
+            <th style="width: 140px;">Data/Hora</th>
+            <th>Usuário</th>
+            <th>Ação</th>
+            <th>Entidade</th>
+            <th>Detalhes</th>
+            <th style="width: 120px;">IP</th>
+          </tr>
+        </thead>
+        <tbody id="logs-list"></tbody>
+      </table>
+      <div id="logs-pagination" style="margin-top: 20px; text-align: center; color: #95a5a6;">
+        <!-- Paginação será inserida aqui -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Store -->
+  <div class="modal" id="store-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="store-modal-title">Nova Loja</h2>
+        <button class="close-modal" onclick="closeStoreModal()">&times;</button>
+      </div>
+      <form id="store-form">
+        <input type="hidden" id="store-id" />
+        <div class="form-group">
+          <label for="store-name">Nome da Loja *</label>
+          <input type="text" id="store-name" required placeholder="Ex: Loja Centro" />
+        </div>
+        <div class="form-group">
+          <label for="store-code">Código *</label>
+          <input type="text" id="store-code" required placeholder="Ex: CTR" maxlength="4" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeStoreModal()">Cancelar</button>
+          <button type="submit" class="primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Status -->
+  <div class="modal" id="status-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="status-modal-title">Novo Status</h2>
+        <button class="close-modal" onclick="closeStatusModal()">&times;</button>
+      </div>
+      <form id="status-form">
+        <input type="hidden" id="status-id" />
+        <div class="form-group">
+          <label for="status-name">Nome do Status *</label>
+          <input type="text" id="status-name" required placeholder="Ex: Em Execução" />
+        </div>
+        <div class="form-group">
+          <label for="status-color">Cor do Card</label>
+          <input type="color" id="status-color" value="#3498db" />
+        </div>
+        <div class="form-group">
+          <label for="status-order">Ordem de Exibição</label>
+          <input type="number" id="status-order" value="0" min="0" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeStatusModal()">Cancelar</button>
+          <button type="submit" class="primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Integradora -->
+  <div class="modal" id="integrator-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="integrator-modal-title">Nova Integradora</h2>
+        <button class="close-modal" onclick="closeIntegratorModal()">&times;</button>
+      </div>
+      <form id="integrator-form">
+        <input type="hidden" id="integrator-id" />
+        <div class="form-group">
+          <label for="integrator-name">Nome da Integradora *</label>
+          <input type="text" id="integrator-name" required placeholder="Ex: Integradora Alpha" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeIntegratorModal()">Cancelar</button>
+          <button type="submit" class="primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Montador -->
+  <div class="modal" id="assembler-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="assembler-modal-title">Novo Montador</h2>
+        <button class="close-modal" onclick="closeAssemblerModal()">&times;</button>
+      </div>
+      <form id="assembler-form">
+        <input type="hidden" id="assembler-id" />
+        <div class="form-group">
+          <label for="assembler-name">Nome do Montador *</label>
+          <input type="text" id="assembler-name" required placeholder="Ex: João Silva" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeAssemblerModal()">Cancelar</button>
+          <button type="submit" class="primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Eletricista -->
+  <div class="modal" id="electrician-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="electrician-modal-title">Novo Eletricista</h2>
+        <button class="close-modal" onclick="closeElectricianModal()">&times;</button>
+      </div>
+      <form id="electrician-form">
+        <input type="hidden" id="electrician-id" />
+        <div class="form-group">
+          <label for="electrician-name">Nome do Eletricista *</label>
+          <input type="text" id="electrician-name" required placeholder="Ex: Carlos Santos" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeElectricianModal()">Cancelar</button>
+          <button type="submit" class="primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Usuário -->
+  <div class="modal" id="user-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="user-modal-title">Novo Usuário</h2>
+        <button class="close-modal" onclick="closeUserModal()">&times;</button>
+      </div>
+      <form id="user-form">
+        <input type="hidden" id="user-id" />
+        <div class="form-group">
+          <label for="user-name">Nome Completo *</label>
+          <input type="text" id="user-name" required placeholder="Ex: Maria Silva" />
+        </div>
+        <div class="form-group">
+          <label for="user-email">Email *</label>
+          <input type="email" id="user-email" required placeholder="Ex: maria@empresa.com" />
+        </div>
+        <div class="form-group" id="password-group">
+          <label for="user-password">Senha *</label>
+          <input type="password" id="user-password" required placeholder="Mínimo 6 caracteres" minlength="6" />
+          <small style="color: #95a5a6; display: block; margin-top: 4px;">Deixe em branco para manter a senha atual (ao editar)</small>
+        </div>
+        <div class="form-group">
+          <label for="user-role">Permissão *</label>
+          <select id="user-role" required>
+            <option value="">Selecione...</option>
+            <option value="admin">🔑 Admin - Controle total do sistema</option>
+            <option value="member">✏️ Membro - Pode criar e editar</option>
+            <option value="viewer">👁️ Visualizador - Apenas leitura</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeUserModal()">Cancelar</button>
+          <button type="submit" class="primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

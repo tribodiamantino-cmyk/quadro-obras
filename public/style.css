@@ -1,0 +1,1027 @@
+:root {
+  --bg: #0b0f19;
+  --panel: #111827;
+  --col: #1f2937;
+  --tile: #0f172a;
+  --text: #e5e7eb;
+  --ring: #334155;
+  --ok: #22c55e;
+  --bad: #ef4444;
+  --blue: #3b82f6;
+  --pend: #f59e0b;
+  --parent: #06b6d4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  background: var(--panel);
+  border-bottom: 1px solid var(--ring);
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+header h1 {
+  font-size: 16px;
+  margin: 0;
+  margin-right: auto;
+}
+
+select, button, input {
+  border: 1px solid var(--ring);
+  background: #1e293b;
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+button {
+  cursor: pointer;
+}
+
+.primary {
+  background: var(--ok);
+  color: #052e1a;
+  border-color: var(--ok);
+}
+
+.wrap {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+aside {
+  width: 240px;
+  max-width: 36vw;
+  background: var(--panel);
+  border-right: 1px solid var(--ring);
+  padding: 10px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+aside h3 {
+  margin: 0 0 6px;
+  font-weight: 700;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+.proj {
+  background: var(--tile);
+  border: 1px solid var(--ring);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+
+.proj.active {
+  outline: 2px solid var(--blue);
+}
+
+.proj-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  align-items: center;
+}
+
+.proj-title[contenteditable] {
+  border-radius: 6px;
+}
+
+.proj-title:focus {
+  outline: 1px dashed var(--blue);
+  background: #0b1220;
+}
+
+.delete-project {
+  background: none;
+  border: none;
+  color: var(--bad);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+}
+
+.delete-project:hover {
+  color: #f87171;
+}
+
+.aside-actions {
+  position: sticky;
+  bottom: 0;
+  background: var(--panel);
+  padding-top: 8px;
+  border-top: 1px solid var(--ring);
+}
+
+.aside-actions button {
+  width: 100%;
+}
+
+main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(240px, 1fr));
+  gap: 12px;
+  padding: 12px;
+  overflow: auto;
+}
+
+.col {
+  background: var(--col);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+}
+
+.col h2 {
+  margin: 0;
+  padding: 10px;
+  border-bottom: 1px solid var(--ring);
+  font-size: 14px;
+}
+
+.tasks {
+  flex: 1;
+  overflow: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-area {
+  padding: 10px;
+  border-top: 1px solid var(--ring);
+  display: flex;
+  gap: 6px;
+}
+
+.task {
+  background: rgba(255,255,255,0.05); /* leve transparência */
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: .6rem .7rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4);
+  transition: box-shadow .15s ease, transform .05s ease, background .2s;
+  color: #f1f1f1; /* texto claro */
+}
+
+.task.pending {
+  border-color: var(--pend);
+  box-shadow: inset 0 0 0 1px var(--pend);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.task.parent-pending {
+  border-color: var(--parent);
+  box-shadow: inset 0 0 0 1px var(--parent);
+  background: rgba(6, 182, 212, 0.08);
+}
+
+.task.dragging {
+  opacity: 0.6;
+}
+
+.hdr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.chev {
+  transition: 0.15s transform ease;
+}
+
+.task.open .chev {
+  transform: rotate(90deg);
+}
+
+.task input {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-weight: 700;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+}
+
+.mini-ctrls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.task.open .mini-ctrls {
+  display: none;
+}
+
+.mini-btn {
+  border: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.mini-back {
+  background: var(--bad);
+  color: #fff;
+}
+
+.mini-advance {
+  background: var(--ok);
+  color: #052e1a;
+}
+
+.mini-del {
+  background: none;
+  border: 1px solid var(--bad);
+  color: var(--bad);
+  padding: 2px 6px;
+}
+
+.mini-del:hover {
+  background: #7f1d1d;
+  color: #fff;
+  border-color: #7f1d1d;
+}
+
+.row {
+  display: none;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.task.open .row {
+  display: flex;
+}
+
+.btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-back {
+  background: var(--bad);
+  color: #fff;
+  border: none;
+  padding: 4px 8px;
+}
+
+.btn-advance {
+  background: var(--ok);
+  color: #052e1a;
+  border: none;
+  padding: 4px 8px;
+}
+
+footer {
+  font-size: 12px;
+  color: #9ca3af;
+  padding: 8px 12px;
+  border-top: 1px solid var(--ring);
+  background: #0c1322;
+}
+
+/* Oculta botões e inputs no modo leitura */
+body.readonly .mini-btn,
+body.readonly .mini-del,
+body.readonly .btn-back,
+body.readonly .btn-advance,
+body.readonly .btns button,
+body.readonly .add-area,
+body.readonly .delete-project,
+body.readonly #btnNewProjectAside,
+body.readonly [contenteditable],
+body.readonly input[readonly] {
+  display: none !important;
+}
+/* Título multilinha (textarea) */
+.task .title-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+}
+.task .title-wrap .chev {
+  flex: 0 0 auto;
+  margin-top: .25rem;
+}
+.task textarea {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 2.2rem;
+  max-height: 12rem;        /* limita exagero */
+  overflow: hidden;         /* sem scroll (auto-resize) */
+  resize: none;             /* usuário não arrasta borda */
+  line-height: 1.25;
+  font: inherit;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: .4rem .5rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Barra de ações em lote */
+#bulkBar {
+  position: fixed;
+  left: 1rem; right: 1rem; bottom: 1rem;
+  background: #111; color: #fff;
+  border-radius: .75rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+  padding: .75rem;
+  z-index: 9999;
+}
+#bulkBar .bulk-inner {
+  display: flex; flex-wrap: wrap; gap: .5rem; align-items: center;
+}
+#bulkBar .primary {
+  background: #2563eb; color: #fff;
+  border: none; padding: .5rem .75rem; border-radius: .5rem;
+}
+#bulkBar .danger {
+  background: #dc2626; color: #fff;
+  border: none; padding: .5rem .75rem; border-radius: .5rem;
+}
+#bulkBar select { padding: .4rem .5rem; }
+.task .sel { margin-right: .5rem; }
+/* Linha externa que carrega checkbox + card */
+.task-line {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: stretch;
+  gap: .5rem;
+  margin-bottom: .5rem; /* espaço entre as linhas */
+}
+
+/* Coluna do checkbox (fora do card) */
+.task-select {
+  display: flex;
+  align-items: flex-start;
+  padding-top: .35rem; /* alinha com o título */
+}
+.task-select .sel {
+  width: 1.05rem; height: 1.05rem;
+  accent-color: #2563eb; /* azul */
+  cursor: pointer;
+}
+
+/* Deixa o card mais limpo/“orgânico” */
+.task {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 10px;
+  padding: .6rem .7rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  transition: box-shadow .15s ease, transform .05s ease;
+}
+.task:hover {
+  background: rgba(255,255,255,0.1);
+  box-shadow: 0 6px 18px rgba(0,0,0,.5);
+}
+.task.dragging {
+  opacity: .8;
+  transform: scale(.98);
+}
+
+.task .hdr {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+/* Ícone/chevron de abrir/fechar */
+.task .title-wrap .chev {
+  flex: 0 0 auto;
+  margin-top: .25rem;
+  opacity: .6;
+}
+
+/* Título como textarea: aparência “orgânica” (sem a caixa branca dura) */
+.task textarea {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 2.1rem;
+  max-height: 12rem;
+  overflow: hidden;
+  resize: none;
+  line-height: 1.25;
+  font: inherit;
+
+  background: transparent;   /* sem fundo branco */
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  outline: none;
+  color: inherit;            /* usa a cor clara do card */
+}
+
+/* feedback leve ao focar (sem ficar feio) */
+.task textarea:focus {
+  background: rgba(255,255,255,.08);
+  border-radius: 6px;
+  padding: .35rem .5rem;
+}
+
+/* miúdos */
+.task .mini-ctrls .mini-btn,
+.task .mini-del {
+  cursor: pointer;
+}
+.task .row { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  gap: .5rem; 
+  margin-top: .4rem;
+}
+.task .btns button {
+  margin-left: .25rem;
+}
+/* Linha externa que carrega checkbox + card */
+.task-line {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: stretch;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
+
+/* Coluna do checkbox (fora do card) */
+.task-select {
+  display: flex;
+  align-items: flex-start;
+  padding-top: .35rem;
+}
+.task-select .sel {
+  width: 1.05rem; height: 1.05rem;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+/* Card mais limpo/orgânico */
+.task {
+  background-color: rgba(20, 20, 20, 0.85) !important; /* cor de base escura */
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: .6rem .7rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,.4);
+  transition: box-shadow .15s ease, transform .05s ease, background .2s;
+  color: #f1f1f1;
+}
+.task:hover {
+  background-color: rgba(40, 40, 40, 0.95) !important; /* mais claro no hover */
+  box-shadow: 0 6px 18px rgba(0,0,0,.5);
+}
+.task.dragging {
+  opacity: .7;
+  transform: scale(.98);
+}
+
+.task .hdr {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+/* Ícone/chevron */
+.task .title-wrap .chev {
+  flex: 0 0 auto;
+  margin-top: .25rem;
+  opacity: .6;
+}
+
+/* Título como textarea (orgânico) */
+.task textarea {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 2.1rem;
+  max-height: 12rem;
+  overflow: hidden;
+  resize: none;
+  line-height: 1.25;
+  font: inherit;
+
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  outline: none;
+  color: inherit;
+}
+.task textarea:focus {
+  background: rgba(0,0,0,.03);
+  border-radius: 6px;
+  padding: .35rem .5rem;
+}
+
+.task .row { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  gap: .5rem; 
+  margin-top: .4rem;
+}
+.task .btns button { margin-left: .25rem; }
+/* Detalhes da tarefa ficam escondidos por padrão */
+.task .row {
+  display: none;
+}
+.task.open .row {
+  display: flex; /* aparece quando a tarefa é expandida */
+}
+
+/* ==================== BOTÕES DE AÇÃO NAS TAREFAS ==================== */
+.task-title {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.task-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.btn-task-nav,
+.btn-task-pending,
+.btn-task-delete {
+  padding: 3px 8px;
+  font-size: 11px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-task-nav.btn-prev {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-task-nav.btn-prev:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+.btn-task-nav.btn-next {
+  background: #10b981;
+  color: white;
+}
+
+.btn-task-nav.btn-next:hover {
+  background: #059669;
+  transform: scale(1.05);
+}
+
+.btn-task-pending {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-task-pending:hover {
+  background: #d97706;
+  transform: scale(1.05);
+}
+
+.btn-task-delete {
+  background: #64748b;
+  color: white;
+  font-size: 16px;
+  padding: 2px 7px;
+  line-height: 1;
+}
+
+.btn-task-delete:hover {
+  background: #475569;
+  transform: scale(1.1);
+}
+
+/* Coluna de detalhes da obra */
+.details-col textarea {
+  width: 100%;
+  min-height: 200px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(20,20,20,0.7);
+  color: #f1f1f1;
+  padding: .75rem;
+  font: inherit;
+  resize: vertical;
+}
+.details-col textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: rgba(40,40,40,0.9);
+}
+
+/* Estilos para cards de projetos com cores de status */
+.project-item {
+  background: var(--tile);
+  border: 1px solid var(--ring);
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+
+.project-item:hover {
+  background: #1a2332;
+  transform: translateX(2px);
+}
+
+.project-item.active {
+  background: #1e3a5f;
+  outline: 2px solid var(--blue);
+}
+
+/* Modal styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  overflow: auto;
+}
+
+.modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: #1f2937;
+  padding: 30px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #374151;
+  padding-bottom: 15px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #f3f4f6;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 32px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.close-modal:hover {
+  color: #f3f4f6;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.form-row .form-group:only-child {
+  grid-column: 1 / -1;
+}
+
+.form-group {
+  margin-bottom: 0;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #d1d5db;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  color: #f3f4f6;
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #374151;
+}
+
+.btn-secondary {
+  background: #374151;
+  color: #d1d5db;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #4b5563;
+}
+
+/* ==================== BOTÕES DE AÇÃO NOS CARDS ==================== */
+.project-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #374151;
+}
+
+.btn-edit,
+.btn-archive,
+.btn-delete-permanent {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.btn-delete-permanent {
+  background: #991b1b;
+  color: white;
+}
+
+.btn-delete-permanent:hover {
+  background: #7f1d1d;
+  transform: translateY(-1px);
+}
+
+.btn-edit {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.btn-archive {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-archive:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* ==================== PAINEL DE DETALHES ==================== */
+#project-info-display {
+  margin-bottom: 12px;
+}
+
+.info-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 5px 0;
+  border-bottom: 1px solid #2c3e50;
+  gap: 10px;
+}
+
+.info-field:last-child {
+  border-bottom: none;
+}
+
+.info-field label {
+  font-weight: 600;
+  color: #94a3b8;
+  font-size: 11px;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.info-field span {
+  color: #e2e8f0;
+  font-size: 11px;
+  text-align: right;
+  flex: 1;
+  word-break: break-word;
+}
+
+/* Detalhes da obra - textarea */
+.details-col textarea {
+  min-height: 150px;
+  font-size: 12px;
+}
+
+/* ==================== OTIMIZAÇÕES DE PERFORMANCE ==================== */
+
+/* Animações suaves para drag & drop */
+.task {
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform;
+}
+
+.task.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg) scale(1.02);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  cursor: grabbing;
+}
+
+.task:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Feedback visual durante drag over */
+.tasks.drag-over {
+  background: rgba(59, 130, 246, 0.1);
+  border: 2px dashed #3b82f6;
+  border-radius: 8px;
+}
+
+/* Animações de botões */
+button {
+  transition: all 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Loading spinner para botões */
+button.loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+button.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Animação de pulse para elementos atualizando */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.updating {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Transições suaves em inputs */
+input, textarea, select {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  outline: none;
+}
+
+/* Melhora performance de animações */
+* {
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Otimização para scroll suave */
+.tasks {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Feedback visual ao clicar */
+.task:active {
+  transform: scale(0.98);
+}
+
+/* Destaque suave ao adicionar nova task */
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.task-new {
+  animation: slideInDown 0.3s ease;
+}

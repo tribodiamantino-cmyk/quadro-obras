@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quadro de Obras — Multiusuário</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>window.APP_VERSION='v1.0.9'</script>
+</head>
+<body>
+  <header>
+    <h1>🛠️ Quadro de Acompanhamento das Obras</h1>
+    <div style="display: flex; align-items: center; gap: 20px; margin-left: auto;">
+      <div>
+        <label for="projectSelect">Obra:</label>
+        <select id="projectSelect"></select>
+      </div>
+      <a href="/settings.html" style="color: #3498db; text-decoration: none;">⚙️ Configurações</a>
+      <button onclick="logout()" style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; transition: background 0.3s;" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
+        🚪 Sair
+      </button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <aside>
+      <div style="margin-bottom: 10px;">
+        <h3 style="margin: 0 0 8px 0;">Obras</h3>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <select id="storeFilterAside" style="font-size: 12px; padding: 6px 8px; width: 100%;">
+            <option value="all">📍 Todas lojas</option>
+          </select>
+          <select id="statusFilterAside" style="font-size: 12px; padding: 6px 8px; width: 100%;">
+            <option value="all">📊 Todos status</option>
+          </select>
+          <select id="categoryFilterAside" style="font-size: 12px; padding: 6px 8px; width: 100%;">
+            <option value="all">📁 Todas categorias</option>
+            <option value="nova">🏗️ Novas Obras</option>
+            <option value="reforma">🔧 Reformas</option>
+          </select>
+          <label style="font-size: 11px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 4px 0;">
+            <input type="checkbox" id="showArchivedCheckbox" style="cursor: pointer;">
+            Mostrar arquivados
+          </label>
+        </div>
+      </div>
+      <div id="projectsList"></div>
+      <div class="aside-actions">
+        <button id="btnNewProjectAside" class="primary">+ Nova obra</button>
+      </div>
+    </aside>
+
+    <main id="board">
+      <!-- NOVA COLUNA: Detalhes da Obra -->
+      <div class="col details-col" data-status="__DETAILS__">
+        <h2>Detalhes da Obra</h2>
+        
+        <!-- Informações Fixas (Somente Leitura) -->
+        <div id="project-info-display">
+          <div class="info-field">
+            <label>Cliente:</label>
+            <span id="detail-client">-</span>
+          </div>
+          <div class="info-field">
+            <label>Loja:</label>
+            <span id="detail-store">-</span>
+          </div>
+          <div class="info-field">
+            <label>Status:</label>
+            <span id="detail-status">-</span>
+          </div>
+          <div class="info-field">
+            <label>Categoria:</label>
+            <span id="detail-category">-</span>
+          </div>
+          <div class="info-field">
+            <label>Integradora:</label>
+            <span id="detail-integrator">-</span>
+          </div>
+          <div class="info-field">
+            <label>Montador:</label>
+            <span id="detail-assembler">-</span>
+          </div>
+          <div class="info-field">
+            <label>Eletricista:</label>
+            <span id="detail-electrician">-</span>
+          </div>
+          <div class="info-field">
+            <label>Data Início:</label>
+            <span id="detail-start-date">-</span>
+          </div>
+          <div class="info-field">
+            <label>Previsão Entrega:</label>
+            <span id="detail-delivery">-</span>
+          </div>
+          <div class="info-field">
+            <label>Localização:</label>
+            <span id="detail-location">-</span>
+          </div>
+        </div>
+        
+        <hr style="margin: 12px 0; border: none; border-top: 1px solid #34495e;">
+        
+        <!-- Seção GSI -->
+        <div class="gsi-section" style="background: #1e293b; padding: 8px; border-radius: 6px; margin-bottom: 12px;">
+          <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #3b82f6; font-size: 11px;">🚚 ENTREGA GSI</label>
+          <div class="gsi-fields" style="display: flex; flex-direction: column; gap: 8px;">
+            <div class="info-field" style="border: none; padding: 4px 0;">
+              <label style="color: #94a3b8; font-size: 10px;">Data Prevista:</label>
+              <span id="detail-gsi-forecast">-</span>
+            </div>
+            <div class="info-field" style="border: none; padding: 4px 0;">
+              <label style="color: #94a3b8; font-size: 10px;">Data Efetiva:</label>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="detail-gsi-actual" style="flex: 1;">-</span>
+                <button id="btn-validate-gsi" 
+                  style="background: #10b981; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; display: none;">
+                  ✓ Validar Chegada
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Observações (Editável) -->
+        <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #95a5a6; font-size: 11px;">Observações:</label>
+        <textarea id="projectDetails" placeholder="Adicione observações sobre a obra..."></textarea>
+      </div>
+
+      <div class="col" data-status="Criado">
+        <h2>Criado</h2>
+        <div class="tasks" id="col-criado"></div>
+        <div class="add-area">
+          <input id="input-criado" placeholder="Nova tarefa..." />
+          <button id="btnAddCriado" class="primary">Adicionar</button>
+        </div>
+      </div>
+
+      <div class="col" data-status="Em separação">
+        <h2>Em separação</h2>
+        <div class="tasks" id="col-em"></div>
+      </div>
+
+      <div class="col" data-status="Pendencia">
+        <h2>Pendência</h2>
+        <div class="tasks" id="col-pend"></div>
+      </div>
+
+      <div class="col" data-status="Em romaneio">
+        <h2>Em romaneio</h2>
+        <div class="tasks" id="col-romaneio"></div>
+      </div>
+
+      <div class="col" data-status="Entregue">
+        <h2>Entregue</h2>
+        <div class="tasks" id="col-entregue"></div>
+      </div>
+    </main>
+  </div>
+
+  <footer>
+    Versão: <span id="vtag"></span> • Se não atualizar em tempo real, recarregue com Ctrl+F5 / Cmd+Shift+R
+  </footer>
+
+  <!-- Modal: Nova Obra -->
+  <div class="modal" id="project-modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2>Nova Obra</h2>
+        <button class="close-modal" onclick="closeProjectModal()">&times;</button>
+      </div>
+      <form id="project-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="project-client">Cliente *</label>
+            <input type="text" id="project-client" required placeholder="Nome do cliente" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="project-store">Loja *</label>
+            <select id="project-store" required>
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="project-status">Status *</label>
+            <select id="project-status" required>
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="project-category">Categoria *</label>
+            <select id="project-category" required>
+              <option value="nova">🏗️ Nova Obra</option>
+              <option value="reforma">🔧 Reforma</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="project-integrator">Integradora</label>
+            <select id="project-integrator" onchange="handleNewOption('integrator')">
+              <option value="">Selecione...</option>
+            </select>
+            <input type="text" id="new-integrator" placeholder="Nome da nova integradora" style="display: none; margin-top: 8px;" />
+          </div>
+          
+          <div class="form-group">
+            <label for="project-assembler">Montador</label>
+            <select id="project-assembler" onchange="handleNewOption('assembler')">
+              <option value="">Selecione...</option>
+            </select>
+            <input type="text" id="new-assembler" placeholder="Nome do novo montador" style="display: none; margin-top: 8px;" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="project-electrician">Eletricista</label>
+            <select id="project-electrician" onchange="handleNewOption('electrician')">
+              <option value="">Selecione...</option>
+            </select>
+            <input type="text" id="new-electrician" placeholder="Nome do novo eletricista" style="display: none; margin-top: 8px;" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="project-start-date">Data Início</label>
+            <input type="date" id="project-start-date" />
+          </div>
+          
+          <div class="form-group">
+            <label for="project-delivery">Previsão de Entrega</label>
+            <input type="date" id="project-delivery" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="project-location">Localização (Endereço)</label>
+            <input type="text" id="project-location" placeholder="Endereço da obra" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="project-gsi-forecast">📦 Data Prevista GSI</label>
+            <input type="date" id="project-gsi-forecast" title="Data prevista para entrega GSI" />
+          </div>
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeProjectModal()">Cancelar</button>
+          <button type="submit" class="primary">Criar Obra</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Editar Obra -->
+  <div class="modal" id="edit-project-modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2>Editar Obra</h2>
+        <button class="close-modal" onclick="closeEditProjectModal()">&times;</button>
+      </div>
+      <form id="edit-project-form">
+        <input type="hidden" id="edit-project-id" />
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-project-client">Cliente *</label>
+            <input type="text" id="edit-project-client" required placeholder="Nome do cliente" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-project-store">Loja *</label>
+            <select id="edit-project-store" required>
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="edit-project-status">Status *</label>
+            <select id="edit-project-status" required>
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-project-integrator">Integradora</label>
+            <select id="edit-project-integrator" onchange="handleNewOption('integrator', 'edit')">
+              <option value="">Selecione...</option>
+            </select>
+            <input type="text" id="edit-new-integrator" placeholder="Nome da nova integradora" style="display: none; margin-top: 8px;" />
+          </div>
+          
+          <div class="form-group">
+            <label for="edit-project-assembler">Montador</label>
+            <select id="edit-project-assembler" onchange="handleNewOption('assembler', 'edit')">
+              <option value="">Selecione...</option>
+            </select>
+            <input type="text" id="edit-new-assembler" placeholder="Nome do novo montador" style="display: none; margin-top: 8px;" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-project-electrician">Eletricista</label>
+            <select id="edit-project-electrician" onchange="handleNewOption('electrician', 'edit')">
+              <option value="">Selecione...</option>
+            </select>
+            <input type="text" id="edit-new-electrician" placeholder="Nome do novo eletricista" style="display: none; margin-top: 8px;" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-project-start-date">Data Início</label>
+            <input type="date" id="edit-project-start-date" />
+          </div>
+          
+          <div class="form-group">
+            <label for="edit-project-delivery">Previsão de Entrega</label>
+            <input type="date" id="edit-project-delivery" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-project-location">Localização (Endereço)</label>
+            <input type="text" id="edit-project-location" placeholder="Endereço da obra" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-project-gsi-forecast">📦 Data Prevista GSI</label>
+            <input type="date" id="edit-project-gsi-forecast" title="Data prevista para entrega GSI" />
+          </div>
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeEditProjectModal()">Cancelar</button>
+          <button type="submit" class="primary">Salvar Alterações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="auth.js"></script>
+  <script src="app-simple.js"></script>
+</body>
+</html>

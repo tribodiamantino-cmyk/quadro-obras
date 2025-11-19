@@ -1,0 +1,26 @@
+{
+  "watch": [
+    "src/**/*.js",
+    "public/**/*.js",
+    "server-supabase.js"
+  ],
+  "ignore": [
+    "node_modules/**/*",
+    "public/**/*.html",
+    "public/**/*.css",
+    "*.md",
+    "*.json",
+    ".git/**/*",
+    "backup/**/*"
+  ],
+  "ext": "js",
+  "delay": 1000,
+  "verbose": false,
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "events": {
+    "restart": "echo '🔄 Servidor reiniciado...'",
+    "crash": "echo '❌ Servidor crashou! Reiniciando...'"
+  }
+}

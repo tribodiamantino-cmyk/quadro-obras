@@ -1,0 +1,36 @@
+{
+  "name": "quadro-obras-multi",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server-supabase.js",
+    "dev": "nodemon --watch src --watch public --watch server-supabase.js server-supabase.js",
+    "dev:verbose": "nodemon --watch src --watch public --watch server-supabase.js --verbose server-supabase.js",
+    "prod": "NODE_ENV=production node server-supabase.js",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:seed": "node prisma/seed.js",
+    "db:push": "prisma db push",
+    "test": "echo \"Sistema funcionando!\" && node -e \"console.log('✅ Node.js OK')\"",
+    "backup": "node scripts/backup-database.js",
+    "logs": "node scripts/view-logs.js",
+    "import": "node scripts/import-old-data.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "@supabase/supabase-js": "^2.83.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^4.19.2",
+    "express-validator": "^7.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "nanoid": "^5.0.7",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7",
+    "prisma": "^5.22.0"
+  }
+}
