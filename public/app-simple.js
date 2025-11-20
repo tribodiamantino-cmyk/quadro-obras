@@ -910,30 +910,48 @@ document.getElementById('project-form').addEventListener('submit', async (e) => 
 if (btnAddCriado && inputCriado) {
   const addTask = async () => {
     const title = inputCriado.value.trim();
-    if (!title || !currentProjectId) return;
+    if (!title) {
+      inputCriado.focus();
+      return;
+    }
+    
+    if (!currentProjectId) {
+      showToast('Selecione uma obra primeiro', 'error');
+      return;
+    }
     
     try {
       const res = await api('/api/tasks', {
         method: 'POST',
         body: JSON.stringify({
           title,
-          status: 'backlog',
+          status: 'Criado', // Status correto em português
           projectId: currentProjectId
         })
       });
       
       if (res.ok) {
         inputCriado.value = '';
+        showToast('✅ Tarefa criada!', 'success');
         await loadState();
+        // Focar de volta no input para facilitar adicionar mais tarefas
+        setTimeout(() => inputCriado.focus(), 100);
+      } else {
+        const error = await res.json();
+        showToast(error.message || 'Erro ao criar tarefa', 'error');
       }
     } catch (error) {
       console.error('Erro ao criar tarefa:', error);
+      showToast('Erro ao criar tarefa', 'error');
     }
   };
   
   btnAddCriado.addEventListener('click', addTask);
   inputCriado.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addTask();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTask();
+    }
   });
 }
 
