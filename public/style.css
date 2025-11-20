@@ -70,8 +70,8 @@ button {
 }
 
 aside {
-  width: 240px;
-  max-width: 36vw;
+  width: 288px;
+  max-width: 40vw;
   background: var(--panel);
   border-right: 1px solid var(--ring);
   padding: 10px;
