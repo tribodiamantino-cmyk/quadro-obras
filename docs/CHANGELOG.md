@@ -1,5 +1,37 @@
 # 📝 Changelog
 
+## [1.0.4] - 2025-11-19
+
+### 🐛 Correções
+- **Botão "Adicionar Tarefa" funcionando**: Corrigido bug crítico na criação de tarefas
+  - Status correto: `'backlog'` → `'Criado'` (português)
+  - Validação melhorada: exibe toast de erro se nenhuma obra estiver selecionada
+  - Mensagens de feedback ao usuário
+
+### ✨ Melhorias UX
+- **Enter para criar tarefa**: Pressione Enter no campo de nova tarefa para adicionar
+- **Foco automático**: Após criar tarefa, cursor volta automaticamente para o campo
+  - Permite adicionar múltiplas tarefas rapidamente
+  - Fluxo otimizado: digitar → Enter → digitar → Enter
+- **Validação visual**: Campo recebe foco se tentar adicionar tarefa vazia
+
+### 🔧 Técnico
+- Previne submit padrão do Enter (`e.preventDefault()`)
+- Timeout de 100ms para garantir foco após re-render
+- Toast notifications para feedback visual
+
+---
+
+## [1.0.3] - 2025-11-19
+
+### 🎨 Melhorias UX
+- **Sidebar 20% mais larga**: Coluna "Obras" expandida de 240px → 288px
+  - Melhor visualização dos nomes de obras
+  - Menos quebra de linha
+  - max-width responsivo: 36vw → 40vw
+
+---
+
 ## [1.0.2] - 2025-11-19
 
 ### ✨ Adicionado
