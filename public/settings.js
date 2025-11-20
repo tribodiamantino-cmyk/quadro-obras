@@ -825,3 +825,38 @@ loadIntegrators();
 loadAssemblers();
 loadElectricians();
 loadLogs(); // Carregar logs na inicialização
+
+// ==================== CARREGAR VERSÃO DA APLICAÇÃO ====================
+async function loadVersion() {
+  try {
+    const res = await fetch('/api/version');
+    if (res.ok) {
+      const data = await res.json();
+      
+      // Atualizar versão
+      const versionEl = document.getElementById('app-version');
+      if (versionEl) {
+        versionEl.textContent = data.version;
+      }
+      
+      // Atualizar data (formatar para PT-BR)
+      const dateEl = document.getElementById('app-date');
+      if (dateEl) {
+        const buildDate = new Date(data.buildDate);
+        const formattedDate = buildDate.toLocaleString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        dateEl.textContent = formattedDate;
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao carregar versão:', error);
+  }
+}
+
+// Carregar versão ao iniciar
+loadVersion();

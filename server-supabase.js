@@ -1233,6 +1233,24 @@ io.on('connection', (socket) => {
 
 // ==================== INICIAR SERVIDOR ====================
 
+// ==================== ENDPOINT VERSÃO ====================
+app.get('/api/version', (req, res) => {
+  const packageJson = require('./package.json');
+  const fs = require('fs');
+  const path = require('path');
+  
+  // Pegar data de modificação do package.json como referência
+  const packagePath = path.join(__dirname, 'package.json');
+  const stats = fs.statSync(packagePath);
+  const buildDate = stats.mtime;
+  
+  res.json({
+    version: packageJson.version,
+    buildDate: buildDate.toISOString(),
+    name: packageJson.name
+  });
+});
+
 const PORT = process.env.PORT || 4000;
 
 server.listen(PORT, () => {
