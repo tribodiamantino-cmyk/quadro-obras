@@ -295,7 +295,8 @@ app.get('/api/projects/state', authenticate, async (req, res) => {
       projectsQuery = projectsQuery.eq('category', category);
     }
     
-    const { data: projects, error: projError } = await projectsQuery
+    const { data: projects, error: projError} = await projectsQuery
+      .order('display_order', { ascending: true })
       .order('created_at', { ascending: false });
 
     if (projError) throw projError;
@@ -333,6 +334,7 @@ app.get('/api/projects/state', authenticate, async (req, res) => {
       .from('tasks')
       .select('*')
       .eq('project_id', currentProject?.id)
+      .order('display_order', { ascending: true })
       .order('created_at', { ascending: true });
 
     if (tasksError) throw tasksError;
@@ -1232,6 +1234,70 @@ io.on('connection', (socket) => {
 });
 
 // ==================== INICIAR SERVIDOR ====================
+
+// ==================== ORDENAÇÃO ====================
+
+// Reordenar projetos
+app.post('/api/projects/reorder', authenticate, async (req, res) => {
+  try {
+    const { projectIds } = req.body; // Array de IDs na ordem desejada
+    
+    if (!Array.isArray(projectIds)) {
+      return res.status(400).json({ message: 'projectIds deve ser um array' });
+    }
+    
+    // Atualizar display_order de cada projeto
+    const updates = projectIds.map((id, index) => 
+      supabase
+        .from('projects')
+        .update({ display_order: index })
+        .eq('id', id)
+        .eq('organization_id', req.user.organizationId)
+    );
+    
+    await Promise.all(updates);
+    
+    // Emitir evento para todos os clientes
+    io.to(req.user.organizationId).emit('projectsReordered', { projectIds });
+    
+    res.json({ message: 'Ordem atualizada', count: projectIds.length });
+  } catch (error) {
+    console.error('Erro ao reordenar projetos:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Reordenar tarefas dentro de uma coluna
+app.post('/api/tasks/reorder', authenticate, async (req, res) => {
+  try {
+    const { taskIds, projectId, status } = req.body; // Array de IDs na ordem desejada
+    
+    if (!Array.isArray(taskIds)) {
+      return res.status(400).json({ message: 'taskIds deve ser um array' });
+    }
+    
+    // Atualizar display_order de cada tarefa
+    const updates = taskIds.map((id, index) => 
+      supabase
+        .from('tasks')
+        .update({ display_order: index })
+        .eq('id', id)
+        .eq('project_id', projectId)
+        .eq('status', status)
+        .eq('organization_id', req.user.organizationId)
+    );
+    
+    await Promise.all(updates);
+    
+    // Emitir evento para todos os clientes
+    io.to(req.user.organizationId).emit('tasksReordered', { taskIds, projectId, status });
+    
+    res.json({ message: 'Ordem atualizada', count: taskIds.length });
+  } catch (error) {
+    console.error('Erro ao reordenar tarefas:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
 
 // ==================== ENDPOINT VERSÃO ====================
 app.get('/api/version', (req, res) => {

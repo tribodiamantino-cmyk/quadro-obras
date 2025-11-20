@@ -420,7 +420,93 @@ function renderProjectsList() {
         }
       });
     });
+    
+    // Setup drag & drop para projetos
+    setupProjectsDragAndDrop();
   }, 0);
+}
+
+//Drag & Drop de Projetos
+function setupProjectsDragAndDrop() {
+  const projectItems = document.querySelectorAll('.project-item');
+  
+  projectItems.forEach(item => {
+    // Tornar draggable
+    item.setAttribute('draggable', 'true');
+    
+    item.addEventListener('dragstart', (e) => {
+      e.stopPropagation();
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', item.innerHTML);
+    });
+    
+    item.addEventListener('dragend', (e) => {
+      item.classList.remove('dragging');
+    });
+    
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = 'move';
+      
+      const dragging = document.querySelector('.project-item.dragging');
+      if (!dragging || dragging === item) return;
+      
+      // Determinar se deve inserir antes ou depois
+      const rect = item.getBoundingClientRect();
+      const midpoint = rect.top + rect.height / 2;
+      const insertBefore = e.clientY < midpoint;
+      
+      if (insertBefore) {
+        item.parentNode.insertBefore(dragging, item);
+      } else {
+        item.parentNode.insertBefore(dragging, item.nextSibling);
+      }
+    });
+    
+    item.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Salvar nova ordem
+      await saveProjectsOrder();
+    });
+  });
+}
+
+// Salvar ordem dos projetos
+async function saveProjectsOrder() {
+  const projectItems = document.querySelectorAll('.project-item');
+  const projectIds = Array.from(projectItems).map(item => {
+    // Extrair ID do onclick
+    const onclick = item.getAttribute('onclick');
+    const match = onclick?.match(/selectProject\('([^']+)'\)/);
+    return match ? match[1] : null;
+  }).filter(Boolean);
+  
+  if (projectIds.length === 0) return;
+  
+  try {
+    const res = await api('/api/projects/reorder', {
+      method: 'POST',
+      body: JSON.stringify({ projectIds })
+    });
+    
+    if (res.ok) {
+      // Atualizar ordem local
+      const reorderedProjects = projectIds.map(id => 
+        state.projects.find(p => p.id === id)
+      ).filter(Boolean);
+      
+      state.projects = reorderedProjects;
+      showToast('✅ Ordem salva!', 'success');
+    }
+  } catch (error) {
+    console.error('Erro ao salvar ordem:', error);
+    showToast('❌ Erro ao salvar ordem', 'error');
+    await loadState(); // Recarregar para reverter
+  }
 }
 
 // Renderizar select de projetos
@@ -1032,43 +1118,82 @@ function setupDragAndDrop() {
       
       // Encontrar task
       const task = state.tasks.find(t => t.id === taskId);
-      if (!task || task.status === newStatus) return;
+      if (!task) return;
       
       const oldStatus = task.status;
+      const statusChanged = task.status !== newStatus;
       
       // UPDATE OTIMISTA: Move visualmente AGORA (já está movido pelo drag)
       const updateUI = () => {
-        task.status = newStatus;
-        const taskEl = document.querySelector(`.task[data-id="${taskId}"]`);
-        if (taskEl) {
-          taskEl.dataset.status = newStatus;
-          updateTaskNavButtons(taskEl, newStatus);
-          
-          // Animação suave
-          taskEl.style.transition = 'all 0.2s ease';
-          taskEl.style.transform = 'scale(1.02)';
-          setTimeout(() => {
-            taskEl.style.transform = 'scale(1)';
-          }, 200);
+        if (statusChanged) {
+          task.status = newStatus;
+          const taskEl = document.querySelector(`.task[data-id="${taskId}"]`);
+          if (taskEl) {
+            taskEl.dataset.status = newStatus;
+            updateTaskNavButtons(taskEl, newStatus);
+            
+            // Animação suave
+            taskEl.style.transition = 'all 0.2s ease';
+            taskEl.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+              taskEl.style.transform = 'scale(1)';
+            }, 200);
+          }
         }
       };
       
       // Rollback se API falhar
       const rollback = () => {
-        task.status = oldStatus;
-        moveTaskInDOM(taskId, oldStatus);
+        if (statusChanged) {
+          task.status = oldStatus;
+          moveTaskInDOM(taskId, oldStatus);
+        }
+        loadState(); // Recarregar para reverter ordem
       };
       
       // API em background (NÃO BLOQUEIA)
-      const apiCall = () => api(`/api/tasks/${taskId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: newStatus })
-      });
+      const apiCall = async () => {
+        // Se mudou de coluna, atualizar status primeiro
+        if (statusChanged) {
+          await api(`/api/tasks/${taskId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: newStatus })
+          });
+        }
+        
+        // Sempre salvar ordem dentro da coluna
+        await saveTasksOrder(newStatus, col);
+      };
       
       // Executa update otimista
       optimisticUpdate(updateUI, rollback, apiCall);
     });
   });
+}
+
+// Salvar ordem das tarefas em uma coluna
+async function saveTasksOrder(status, columnElement) {
+  const taskElements = columnElement.querySelectorAll('.task');
+  const taskIds = Array.from(taskElements).map(el => el.dataset.id);
+  
+  if (taskIds.length === 0 || !currentProjectId) return;
+  
+  try {
+    const res = await api('/api/tasks/reorder', {
+      method: 'POST',
+      body: JSON.stringify({
+        taskIds,
+        projectId: currentProjectId,
+        status
+      })
+    });
+    
+    if (!res.ok) {
+      console.error('Erro ao salvar ordem das tarefas');
+    }
+  } catch (error) {
+    console.error('Erro ao salvar ordem das tarefas:', error);
+  }
 }
 
 // Mapear coluna para status
@@ -1096,6 +1221,9 @@ socket.on('taskCreated', () => loadState());
 socket.on('taskUpdated', () => loadState());
 socket.on('taskDeleted', () => loadState());
 socket.on('projectCreated', () => loadState());
+socket.on('projectUpdated', () => loadState());
+socket.on('projectsReordered', () => loadState());
+socket.on('tasksReordered', () => loadState());
 
 // Salvar detalhes do projeto - OTIMIZADO COM DEBOUNCE
 if (projectDetails) {
