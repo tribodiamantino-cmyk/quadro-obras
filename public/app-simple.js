@@ -92,21 +92,13 @@ async function optimisticUpdate(updateFn, rollbackFn, apiCall) {
     updateFn();
     
     // 2. Chama API em background
-    const response = await apiCall();
-    
-    // 3. Se falhar, reverte
-    if (!response.ok) {
-      rollbackFn();
-      const error = await response.json();
-      showToast(error.message || 'Erro ao salvar', 'error');
-      return false;
-    }
+    await apiCall();
     
     return true;
   } catch (error) {
-    console.error('Erro no update otimista:', error);
+    console.error('❌ Erro no update otimista:', error);
     rollbackFn();
-    showToast('Erro de conexão', 'error');
+    showToast(error.message || 'Erro de conexão', 'error');
     return false;
   }
 }
@@ -1144,6 +1136,7 @@ function setupDragAndDrop() {
       
       // Rollback se API falhar
       const rollback = () => {
+        console.warn('⚠️ Rollback: revertendo alteração');
         if (statusChanged) {
           task.status = oldStatus;
           moveTaskInDOM(taskId, oldStatus);
@@ -1153,16 +1146,37 @@ function setupDragAndDrop() {
       
       // API em background (NÃO BLOQUEIA)
       const apiCall = async () => {
-        // Se mudou de coluna, atualizar status primeiro
-        if (statusChanged) {
-          await api(`/api/tasks/${taskId}`, {
-            method: 'PATCH',
-            body: JSON.stringify({ status: newStatus })
-          });
+        try {
+          // Se mudou de coluna, atualizar status primeiro
+          if (statusChanged) {
+            console.log(`📝 Atualizando status de "${task.title}": ${oldStatus} → ${newStatus}`);
+            
+            const res = await api(`/api/tasks/${taskId}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ status: newStatus })
+            });
+            
+            if (!res.ok) {
+              const errorData = await res.json().catch(() => ({}));
+              console.error('❌ Erro ao atualizar status:', errorData);
+              throw new Error(errorData.message || 'Erro ao atualizar status');
+            }
+            
+            console.log(`✅ Status atualizado com sucesso`);
+          }
+          
+          // Sempre salvar ordem dentro da coluna
+          const orderSaved = await saveTasksOrder(newStatus, col);
+          
+          if (!orderSaved && statusChanged) {
+            // Se ordem falhou mas status mudou, ainda assim é parcialmente bem-sucedido
+            console.warn('⚠️ Status atualizado, mas ordem não foi salva');
+          }
+          
+        } catch (error) {
+          console.error('❌ Erro na chamada API:', error);
+          throw error; // Re-throw para acionar rollback
         }
-        
-        // Sempre salvar ordem dentro da coluna
-        await saveTasksOrder(newStatus, col);
       };
       
       // Executa update otimista
@@ -1176,9 +1190,14 @@ async function saveTasksOrder(status, columnElement) {
   const taskElements = columnElement.querySelectorAll('.task');
   const taskIds = Array.from(taskElements).map(el => el.dataset.id);
   
-  if (taskIds.length === 0 || !currentProjectId) return;
+  if (taskIds.length === 0 || !currentProjectId) {
+    console.warn('⚠️ Nenhuma tarefa para salvar ordem');
+    return;
+  }
   
   try {
+    console.log(`📋 Salvando ordem de ${taskIds.length} tarefas (${status})...`);
+    
     const res = await api('/api/tasks/reorder', {
       method: 'POST',
       body: JSON.stringify({
@@ -1189,10 +1208,20 @@ async function saveTasksOrder(status, columnElement) {
     });
     
     if (!res.ok) {
-      console.error('Erro ao salvar ordem das tarefas');
+      const errorData = await res.json().catch(() => ({}));
+      console.error('❌ Erro ao salvar ordem das tarefas:', errorData);
+      showToast('Erro ao salvar ordem', 'error');
+      return false;
     }
+    
+    const result = await res.json();
+    console.log(`✅ Ordem salva: ${result.count} tarefas`);
+    return true;
+    
   } catch (error) {
-    console.error('Erro ao salvar ordem das tarefas:', error);
+    console.error('❌ Erro de conexão ao salvar ordem:', error);
+    showToast('Erro de conexão', 'error');
+    return false;
   }
 }
 
@@ -1578,10 +1607,22 @@ window.moveTask = async function(taskId, direction) {
   };
   
   // API em background
-  const apiCall = () => api(`/api/tasks/${taskId}`, {
-    method: 'PATCH',
-    body: JSON.stringify({ status: newStatus })
-  });
+  const apiCall = async () => {
+    console.log(`📝 Movendo tarefa "${task.title}": ${oldStatus} → ${newStatus}`);
+    
+    const res = await api(`/api/tasks/${taskId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: newStatus })
+    });
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      console.error('❌ Erro ao mover tarefa:', errorData);
+      throw new Error(errorData.message || 'Erro ao mover tarefa');
+    }
+    
+    console.log(`✅ Tarefa movida com sucesso`);
+  };
   
   const success = await optimisticUpdate(updateUI, rollback, apiCall);
   

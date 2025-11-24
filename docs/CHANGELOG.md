@@ -1,5 +1,73 @@
 # 📝 Changelog
 
+## [1.1.0] - 2025-11-19
+
+### 🎉 FEATURES PRINCIPAIS
+
+**🎨 Drag & Drop com Ordenação Persistente**
+- **Obras**: Arraste e solte obras na sidebar para reorganizar
+  - Cursor muda para "mão" (grab/grabbing)
+  - Efeito visual de rotação ao arrastar
+  - Salva ordem automaticamente no banco
+  - Toast de confirmação: "✅ Ordem salva!"
+  - Ordem persiste após reload
+
+- **Tarefas**: Reorganize tarefas dentro das colunas Kanban
+  - Arraste entre colunas: muda status + salva ordem
+  - Arraste dentro da coluna: apenas reordena
+  - Update otimista para UX fluida
+  - Rollback automático se houver erro
+
+**⚡ Sincronização em Tempo Real**
+- Socket.IO para updates instantâneos entre usuários
+- Quando um usuário move algo, **TODOS veem em tempo real!**
+- Funciona entre múltiplas abas/dispositivos/usuários
+- Eventos: `projectsReordered`, `tasksReordered`, `projectUpdated`
+
+### 🗄️ Backend
+
+- ✅ `POST /api/projects/reorder` - Endpoint para reordenar obras
+- ✅ `POST /api/tasks/reorder` - Endpoint para reordenar tarefas
+- ✅ Campo `display_order` em `projects` e `tasks` (INTEGER, default 0)
+- ✅ Índices otimizados para performance de ordenação
+- ✅ Socket.IO emite eventos de reordenação para toda organização
+- ✅ Ordenação automática por `display_order` nas consultas
+
+### 🎨 Frontend
+
+- ✅ `setupProjectsDragAndDrop()` - Drag & drop de obras
+- ✅ `saveProjectsOrder()` - Salva ordem das obras
+- ✅ `saveTasksOrder()` - Salva ordem das tarefas
+- ✅ CSS: `.dragging` com rotação e sombra azul
+- ✅ Cursor `grab` → `grabbing` durante drag
+
+### 🔧 Técnico
+
+- Campo `display_order` baseado em zero (0, 1, 2, 3...)
+- Projetos ordenados dentro da organização
+- Tarefas ordenadas por projeto + status
+- Update otimista com rollback
+- Debounce para evitar requisições excessivas
+
+### 📝 Migrações
+
+**SQL executado no Supabase:**
+```sql
+ALTER TABLE projects ADD COLUMN display_order INTEGER DEFAULT 0;
+ALTER TABLE tasks ADD COLUMN display_order INTEGER DEFAULT 0;
+CREATE INDEX idx_projects_order ON projects(organization_id, display_order);
+CREATE INDEX idx_tasks_order ON tasks(project_id, status, display_order);
+```
+
+### 📚 Documentação
+
+- `DRAG-DROP-IMPLEMENTADO.md` - Guia completo de implementação
+- `INSTRUCAO-BANCO-ORDEM.md` - Instruções SQL
+- `supabase-add-order.sql` - Script de migração
+- `scripts/setup-order.js` - Script de teste
+
+---
+
 ## [1.0.4] - 2025-11-19
 
 ### 🐛 Correções

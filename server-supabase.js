@@ -756,6 +756,8 @@ app.patch('/api/tasks/:id', authenticate, async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
+    console.log(`📝 Atualizando tarefa ${id}:`, updates);
+
     const { data: task, error } = await supabase
       .from('tasks')
       .update(updates)
@@ -764,12 +766,21 @@ app.patch('/api/tasks/:id', authenticate, async (req, res) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error(`❌ Erro ao atualizar tarefa ${id}:`, error);
+      throw error;
+    }
 
+    if (!task) {
+      console.error(`❌ Tarefa ${id} não encontrada ou não pertence à organização`);
+      return res.status(404).json({ message: 'Tarefa não encontrada' });
+    }
+
+    console.log(`✅ Tarefa ${id} atualizada com sucesso`);
     io.to(req.user.organizationId).emit('taskUpdated', task);
     res.json(task);
   } catch (error) {
-    console.error('Erro ao atualizar tarefa:', error);
+    console.error('❌ Erro ao atualizar tarefa:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -1276,6 +1287,12 @@ app.post('/api/tasks/reorder', authenticate, async (req, res) => {
       return res.status(400).json({ message: 'taskIds deve ser um array' });
     }
     
+    if (taskIds.length === 0) {
+      return res.json({ message: 'Nenhuma tarefa para reordenar', count: 0 });
+    }
+    
+    console.log(`📋 Reordenando ${taskIds.length} tarefas no projeto ${projectId}, status: ${status}`);
+    
     // Atualizar display_order de cada tarefa
     const updates = taskIds.map((id, index) => 
       supabase
@@ -1287,14 +1304,26 @@ app.post('/api/tasks/reorder', authenticate, async (req, res) => {
         .eq('organization_id', req.user.organizationId)
     );
     
-    await Promise.all(updates);
+    const results = await Promise.all(updates);
+    
+    // Verificar se houve erros
+    const errors = results.filter(r => r.error);
+    if (errors.length > 0) {
+      console.error('❌ Erros ao reordenar tarefas:', errors);
+      return res.status(500).json({ 
+        message: 'Erro ao reordenar algumas tarefas',
+        errors: errors.map(e => e.error.message)
+      });
+    }
+    
+    console.log(`✅ ${taskIds.length} tarefas reordenadas com sucesso`);
     
     // Emitir evento para todos os clientes
     io.to(req.user.organizationId).emit('tasksReordered', { taskIds, projectId, status });
     
     res.json({ message: 'Ordem atualizada', count: taskIds.length });
   } catch (error) {
-    console.error('Erro ao reordenar tarefas:', error);
+    console.error('❌ Erro ao reordenar tarefas:', error);
     res.status(500).json({ message: error.message });
   }
 });
