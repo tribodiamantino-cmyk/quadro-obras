@@ -243,6 +243,7 @@ async function loadState() {
     
     if (!res.ok) {
       console.error('❌ Erro ao carregar estado:', res.status);
+      showToast('Erro ao carregar dados', 'error');
       return;
     }
     
@@ -256,8 +257,10 @@ async function loadState() {
     }
     
     render();
+    console.log(`✅ Estado carregado: ${state.tasks?.length || 0} tarefas`);
   } catch (error) {
-    console.error('Erro ao carregar estado:', error);
+    console.error('❌ Erro ao carregar estado:', error);
+    showToast('Erro de conexão', 'error');
   }
 }
 
@@ -1245,6 +1248,7 @@ function getStatusFromColumn(colId) {
 
 // Socket events
 let lastLocalUpdate = 0; // Timestamp da última ação local
+let pendingLocalActions = new Set(); // IDs das ações locais pendentes
 
 socket.on('connect', () => {
   console.log('Socket conectado');
@@ -1254,32 +1258,62 @@ socket.on('connect', () => {
   }
 });
 
-// Ignorar eventos socket se a ação foi feita há menos de 2 segundos
+// Ignorar eventos socket apenas se foi uma ação local RECENTE (menos de 1 segundo)
 const shouldReloadFromSocket = () => {
-  return (Date.now() - lastLocalUpdate) > 2000;
+  const timeSinceLastUpdate = Date.now() - lastLocalUpdate;
+  
+  // Se foi há menos de 1 segundo, ignorar
+  if (timeSinceLastUpdate < 1000) {
+    console.log(`🔕 Ignorando socket event (ação local há ${timeSinceLastUpdate}ms)`);
+    return false;
+  }
+  
+  return true;
 };
 
 socket.on('taskCreated', () => {
-  if (shouldReloadFromSocket()) loadState();
+  if (shouldReloadFromSocket()) {
+    console.log('📥 Socket: taskCreated - recarregando...');
+    loadState();
+  }
 });
 
-socket.on('taskUpdated', () => {
-  if (shouldReloadFromSocket()) loadState();
+socket.on('taskUpdated', (data) => {
+  if (shouldReloadFromSocket()) {
+    console.log('📥 Socket: taskUpdated - recarregando...');
+    loadState();
+  }
 });
 
 socket.on('taskDeleted', () => {
-  if (shouldReloadFromSocket()) loadState();
+  if (shouldReloadFromSocket()) {
+    console.log('📥 Socket: taskDeleted - recarregando...');
+    loadState();
+  }
 });
 
-socket.on('projectCreated', () => loadState());
-socket.on('projectUpdated', () => loadState());
+socket.on('projectCreated', () => {
+  console.log('📥 Socket: projectCreated - recarregando...');
+  loadState();
+});
+
+socket.on('projectUpdated', () => {
+  console.log('📥 Socket: projectUpdated - recarregando...');
+  loadState();
+});
 
 socket.on('projectsReordered', () => {
-  if (shouldReloadFromSocket()) loadState();
+  if (shouldReloadFromSocket()) {
+    console.log('📥 Socket: projectsReordered - recarregando...');
+    loadState();
+  }
 });
 
 socket.on('tasksReordered', () => {
-  if (shouldReloadFromSocket()) loadState();
+  if (shouldReloadFromSocket()) {
+    console.log('📥 Socket: tasksReordered - recarregando...');
+    loadState();
+  }
 });
 
 // Salvar detalhes do projeto - OTIMIZADO COM DEBOUNCE
