@@ -999,6 +999,9 @@ if (btnAddCriado && inputCriado) {
     }
     
     try {
+      // Marcar atualização local
+      lastLocalUpdate = Date.now();
+      
       const res = await api('/api/tasks', {
         method: 'POST',
         body: JSON.stringify({
@@ -1141,12 +1144,15 @@ function setupDragAndDrop() {
           task.status = oldStatus;
           moveTaskInDOM(taskId, oldStatus);
         }
-        loadState(); // Recarregar para reverter ordem
+        // NÃO chamar loadState() - deixa o que está visualmente
       };
       
       // API em background (NÃO BLOQUEIA)
       const apiCall = async () => {
         try {
+          // Marcar que estamos fazendo uma atualização local
+          lastLocalUpdate = Date.now();
+          
           // Se mudou de coluna, atualizar status primeiro
           if (statusChanged) {
             console.log(`📝 Atualizando status de "${task.title}": ${oldStatus} → ${newStatus}`);
@@ -1238,6 +1244,8 @@ function getStatusFromColumn(colId) {
 }
 
 // Socket events
+let lastLocalUpdate = 0; // Timestamp da última ação local
+
 socket.on('connect', () => {
   console.log('Socket conectado');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -1246,13 +1254,33 @@ socket.on('connect', () => {
   }
 });
 
-socket.on('taskCreated', () => loadState());
-socket.on('taskUpdated', () => loadState());
-socket.on('taskDeleted', () => loadState());
+// Ignorar eventos socket se a ação foi feita há menos de 2 segundos
+const shouldReloadFromSocket = () => {
+  return (Date.now() - lastLocalUpdate) > 2000;
+};
+
+socket.on('taskCreated', () => {
+  if (shouldReloadFromSocket()) loadState();
+});
+
+socket.on('taskUpdated', () => {
+  if (shouldReloadFromSocket()) loadState();
+});
+
+socket.on('taskDeleted', () => {
+  if (shouldReloadFromSocket()) loadState();
+});
+
 socket.on('projectCreated', () => loadState());
 socket.on('projectUpdated', () => loadState());
-socket.on('projectsReordered', () => loadState());
-socket.on('tasksReordered', () => loadState());
+
+socket.on('projectsReordered', () => {
+  if (shouldReloadFromSocket()) loadState();
+});
+
+socket.on('tasksReordered', () => {
+  if (shouldReloadFromSocket()) loadState();
+});
 
 // Salvar detalhes do projeto - OTIMIZADO COM DEBOUNCE
 if (projectDetails) {
@@ -1608,6 +1636,9 @@ window.moveTask = async function(taskId, direction) {
   
   // API em background
   const apiCall = async () => {
+    // Marcar que estamos fazendo uma atualização local
+    lastLocalUpdate = Date.now();
+    
     console.log(`📝 Movendo tarefa "${task.title}": ${oldStatus} → ${newStatus}`);
     
     const res = await api(`/api/tasks/${taskId}`, {
