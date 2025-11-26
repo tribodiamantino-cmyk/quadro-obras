@@ -14,6 +14,7 @@ let currentProjectId = null;
 let selectedStoreId = 'all'; // Filtro de loja atual
 let selectedStatusId = 'all'; // Filtro de status atual
 let selectedCategory = 'all'; // Filtro de categoria atual
+let searchQuery = ''; // Filtro de busca por nome
 let showArchived = false; // Mostrar obras arquivadas
 
 // ==================== HELPERS DE OTIMIZAÇÃO ====================
@@ -216,6 +217,7 @@ const projectDetails = document.getElementById('projectDetails');
 const storeFilterAside = document.getElementById('storeFilterAside');
 const statusFilterAside = document.getElementById('statusFilterAside');
 const categoryFilterAside = document.getElementById('categoryFilterAside');
+const searchFilterAside = document.getElementById('searchFilterAside');
 const showArchivedCheckbox = document.getElementById('showArchivedCheckbox');
 
 // Carregar estado inicial
@@ -347,11 +349,44 @@ if (showArchivedCheckbox) {
   });
 }
 
+// Filtro de busca por nome - listener COM DEBOUNCE
+if (searchFilterAside) {
+  const debouncedFilter = debounce(() => renderProjectsList(), 300);
+  const handleSearchChange = () => {
+    searchQuery = searchFilterAside.value.trim();
+    debouncedFilter();
+  };
+  // iOS Safari pode não disparar 'change', então usar 'input' também
+  searchFilterAside.addEventListener('change', handleSearchChange);
+  searchFilterAside.addEventListener('input', handleSearchChange);
+}
+
+// Select de projetos - mostrar detalhes ao selecionar
+if (projectSelect) {
+  const handleProjectChange = () => {
+    const selectedProjectId = projectSelect.value;
+    if (selectedProjectId) {
+      selectProject(selectedProjectId);
+    }
+  };
+  // iOS Safari pode não disparar 'change', então usar 'input' também
+  projectSelect.addEventListener('change', handleProjectChange);
+  projectSelect.addEventListener('input', handleProjectChange);
+}
+
 // Renderizar lista de projetos
 function renderProjectsList() {
   if (!projectsList) return;
   
-  projectsList.innerHTML = (state.projects || []).map(p => {
+  projectsList.innerHTML = (state.projects || [])
+    .filter(p => {
+      // Filtro de busca por nome
+      if (searchQuery && !p.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+      return true;
+    })
+    .map(p => {
     const statusColor = p.work_status?.color || '#34495e';
     const storeName = p.store?.name || 'Sem loja';
     const storeCode = p.store?.code || '-';
@@ -508,7 +543,14 @@ async function saveProjectsOrder() {
 function renderProjectSelect() {
   if (!projectSelect) return;
   
-  projectSelect.innerHTML = (state.projects || []).map(p => `
+  // Ordenar projetos alfabeticamente por nome
+  const sortedProjects = [...(state.projects || [])].sort((a, b) => {
+    const nameA = a.client_name || a.name || '';
+    const nameB = b.client_name || b.name || '';
+    return nameA.localeCompare(nameB, 'pt-BR', { sensitivity: 'base' });
+  });
+  
+  projectSelect.innerHTML = sortedProjects.map(p => `
     <option value="${p.id}" ${p.id === currentProjectId ? 'selected' : ''}>
       ${p.client_name || p.name}
     </option>
