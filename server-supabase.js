@@ -1346,6 +1346,37 @@ app.get('/api/version', (req, res) => {
   });
 });
 
+// ==================== ENDPOINT DASHBOARD PÚBLICO ====================
+// Dashboard simplificado sem autenticação para visualização mobile
+app.get('/api/dashboard', async (req, res) => {
+  try {
+    // Buscar todas as organizações ativas (ou você pode fixar em uma organização específica)
+    // Para simplificar, vamos pegar a primeira organização ou usar um ID fixo
+    const ORGANIZATION_ID = process.env.DASHBOARD_ORG_ID || '3327c3ad-20e0-41d6-8f4b-1b4fcf7310fd';
+    
+    // Buscar todos os projetos com relacionamentos
+    const { data: projects, error: projError } = await supabase
+      .from('projects')
+      .select('*, store:stores(*), work_status:work_statuses(*)')
+      .eq('organization_id', ORGANIZATION_ID)
+      .order('display_order', { ascending: true })
+      .order('created_at', { ascending: false });
+
+    if (projError) throw projError;
+
+    res.json({
+      projects: projects || [],
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Erro ao buscar dashboard:', error);
+    res.status(500).json({ 
+      message: 'Erro ao carregar dashboard',
+      error: error.message 
+    });
+  }
+});
+
 const PORT = process.env.PORT || 4000;
 
 server.listen(PORT, () => {
