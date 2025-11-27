@@ -250,7 +250,71 @@
     .project-card:nth-child(2) { animation-delay: 0.1s; }
     .project-card:nth-child(3) { animation-delay: 0.15s; }
     .project-card:nth-child(4) { animation-delay: 0.2s; }
-    .project-card:nth-child(5) { animation-delay: 0.25s; }
+    .filter-btn:nth-child(5) { animation-delay: 0.25s; }
+
+    /* Filtros avançados */
+    .advanced-filters {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .advanced-filters h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-group {
+      margin-bottom: 12px;
+    }
+
+    .filter-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .filter-group label {
+      display: block;
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .filter-group select:focus,
+    .filter-group input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 400px) {
+      .filter-row {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -279,7 +343,48 @@
     </div>
   </div>
 
-  <!-- Filtros -->
+  <!-- Filtros Avançados -->
+  <div class="advanced-filters">
+    <h3>🔍 Filtros Avançados</h3>
+    
+    <div class="filter-group">
+      <label>🏪 Loja</label>
+      <select id="storeFilter">
+        <option value="all">Todas as lojas</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>🔌 Integradora</label>
+      <select id="integratorFilter">
+        <option value="all">Todas as integradoras</option>
+      </select>
+    </div>
+
+    <div class="filter-row">
+      <div class="filter-group">
+        <label>📅 Previsão Início (De)</label>
+        <input type="date" id="startDateFrom">
+      </div>
+      <div class="filter-group">
+        <label>📅 Previsão Início (Até)</label>
+        <input type="date" id="startDateTo">
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <div class="filter-group">
+        <label>🏁 Previsão Fim (De)</label>
+        <input type="date" id="endDateFrom">
+      </div>
+      <div class="filter-group">
+        <label>🏁 Previsão Fim (Até)</label>
+        <input type="date" id="endDateTo">
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros Rápidos -->
   <div class="filters">
     <button class="filter-btn active" data-filter="all">🏗️ Todas</button>
     <button class="filter-btn" data-filter="active">✅ Ativas</button>

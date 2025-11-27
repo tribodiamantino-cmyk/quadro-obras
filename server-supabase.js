@@ -1354,18 +1354,39 @@ app.get('/api/dashboard', async (req, res) => {
     // Para simplificar, vamos pegar a primeira organização ou usar um ID fixo
     const ORGANIZATION_ID = process.env.DASHBOARD_ORG_ID || '3327c3ad-20e0-41d6-8f4b-1b4fcf7310fd';
     
-    // Buscar todos os projetos com relacionamentos
+    // Buscar todos os projetos com relacionamentos (incluindo integradora)
     const { data: projects, error: projError } = await supabase
       .from('projects')
-      .select('*, store:stores(*), work_status:work_statuses(*)')
+      .select('*, store:stores(*), work_status:work_statuses(*), integrator:integrators(*)')
       .eq('organization_id', ORGANIZATION_ID)
       .order('display_order', { ascending: true })
       .order('created_at', { ascending: false });
 
     if (projError) throw projError;
 
+    // Buscar lojas para dropdown de filtro
+    const { data: stores, error: storesError } = await supabase
+      .from('stores')
+      .select('*')
+      .eq('organization_id', ORGANIZATION_ID)
+      .eq('active', true)
+      .order('name', { ascending: true });
+
+    if (storesError) throw storesError;
+
+    // Buscar integradoras para dropdown de filtro
+    const { data: integrators, error: integratorsError } = await supabase
+      .from('integrators')
+      .select('*')
+      .eq('organization_id', ORGANIZATION_ID)
+      .order('name', { ascending: true });
+
+    if (integratorsError) throw integratorsError;
+
     res.json({
       projects: projects || [],
+      stores: stores || [],
+      integrators: integrators || [],
       timestamp: new Date().toISOString()
     });
   } catch (error) {
