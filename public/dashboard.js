@@ -125,7 +125,7 @@ function renderProjects() {
     const isArchived = project.archived === true;
     
     return `
-      <div class="project-card" style="border-color: ${statusColor}">
+      <div class="project-card" style="border-color: ${statusColor}" onclick='openProjectDetails(${JSON.stringify(project).replace(/'/g, "&apos;")})'>
         <div class="project-header">
           <div>
             <div class="project-name">${project.client_name || project.name}</div>
@@ -362,6 +362,109 @@ function showError() {
   `;
 }
 
+// Abrir modal com detalhes do projeto
+function openProjectDetails(project) {
+  const modal = document.getElementById('modalOverlay');
+  
+  // Preencher informações básicas
+  document.getElementById('modalProjectName').textContent = project.client_name || project.name;
+  document.getElementById('modalProjectStore').textContent = `🏪 ${project.store?.code || '-'} ${project.store?.name || 'Sem loja'}`;
+  
+  // Status
+  const statusColor = project.work_status?.color || '#64748b';
+  const statusName = project.work_status?.name || 'Sem status';
+  document.getElementById('modalStatus').innerHTML = `
+    <div class="status-display" style="background: ${statusColor}20; color: ${statusColor}; border: 1px solid ${statusColor}40;">
+      <span class="status-dot-large" style="background: ${statusColor}"></span>
+      ${statusName}
+    </div>
+  `;
+  
+  // Categoria
+  const categoryIcon = project.category === 'reforma' ? '🔧' : '🏗️';
+  const categoryText = project.category === 'reforma' ? 'Reforma' : 'Nova';
+  document.getElementById('modalCategory').textContent = `${categoryIcon} ${categoryText}`;
+  
+  // Cliente
+  document.getElementById('modalClientName').textContent = project.client_name || '-';
+  
+  // Datas
+  document.getElementById('modalForecastStart').textContent = project.forecast_start 
+    ? new Date(project.forecast_start).toLocaleDateString('pt-BR') 
+    : 'Não definida';
+  document.getElementById('modalForecastEnd').textContent = project.forecast_end 
+    ? new Date(project.forecast_end).toLocaleDateString('pt-BR') 
+    : 'Não definida';
+  
+  // Responsáveis
+  document.getElementById('modalIntegrator').textContent = project.integrator?.name || 'Não definida';
+  document.getElementById('modalAssembler').textContent = project.assembler?.name || 'Não definida';
+  document.getElementById('modalElectrician').textContent = project.electrician?.name || 'Não definida';
+  
+  // Observações
+  const observationsSection = document.getElementById('modalObservationsSection');
+  const observationsText = project.details_text || '';
+  if (observationsText.trim()) {
+    observationsSection.style.display = 'block';
+    document.getElementById('modalObservations').innerHTML = observationsText.replace(/\n/g, '<br>');
+  } else {
+    observationsSection.style.display = 'none';
+  }
+  
+  // Checklist
+  const checklistSection = document.getElementById('modalChecklistSection');
+  const checklist = project.details_checklist || [];
+  if (checklist.length > 0) {
+    checklistSection.style.display = 'block';
+    document.getElementById('modalChecklist').innerHTML = checklist.map(item => `
+      <div class="checklist-item">
+        <div class="checklist-checkbox ${item.checked ? 'checked' : ''}"></div>
+        <div class="checklist-text ${item.checked ? 'checked' : ''}">${item.text}</div>
+      </div>
+    `).join('');
+  } else {
+    checklistSection.style.display = 'none';
+  }
+  
+  // Mostrar modal
+  modal.classList.add('show');
+  document.body.style.overflow = 'hidden'; // Prevenir scroll do body
+}
+
+// Fechar modal
+function closeModal() {
+  const modal = document.getElementById('modalOverlay');
+  modal.classList.remove('show');
+  document.body.style.overflow = ''; // Restaurar scroll
+}
+
+// Configurar eventos do modal
+function setupModal() {
+  const modalClose = document.getElementById('modalClose');
+  const modalOverlay = document.getElementById('modalOverlay');
+  
+  // Fechar ao clicar no X
+  if (modalClose) {
+    modalClose.addEventListener('click', closeModal);
+  }
+  
+  // Fechar ao clicar fora do modal
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        closeModal();
+      }
+    });
+  }
+  
+  // Fechar com ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+    }
+  });
+}
+
 // Carregar versão da API
 async function loadVersion() {
   try {
@@ -378,8 +481,10 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     init();
     loadVersion();
+    setupModal();
   });
 } else {
   init();
   loadVersion();
+  setupModal();
 }

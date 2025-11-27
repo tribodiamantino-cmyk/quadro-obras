@@ -1354,10 +1354,17 @@ app.get('/api/dashboard', async (req, res) => {
     // Para simplificar, vamos pegar a primeira organização ou usar um ID fixo
     const ORGANIZATION_ID = process.env.DASHBOARD_ORG_ID || '3327c3ad-20e0-41d6-8f4b-1b4fcf7310fd';
     
-    // Buscar todos os projetos com relacionamentos (incluindo integradora)
+    // Buscar todos os projetos com TODOS os relacionamentos
     const { data: projects, error: projError } = await supabase
       .from('projects')
-      .select('*, store:stores(*), work_status:work_statuses(*), integrator:integrators(*)')
+      .select(`
+        *, 
+        store:stores(*), 
+        work_status:work_statuses(*), 
+        integrator:integrators(*),
+        assembler:assemblers(*),
+        electrician:electricians(*)
+      `)
       .eq('organization_id', ORGANIZATION_ID)
       .order('display_order', { ascending: true })
       .order('created_at', { ascending: false });

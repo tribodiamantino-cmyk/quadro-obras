@@ -357,6 +357,227 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* Modal de detalhes */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 16px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease-out;
+      position: relative;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-header {
+      padding: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: sticky;
+      top: 0;
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      z-index: 10;
+    }
+
+    .modal-title {
+      flex: 1;
+    }
+
+    .modal-title h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+
+    .modal-title p {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .modal-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-left: 12px;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .modal-close:active {
+      transform: scale(0.95);
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .detail-section {
+      margin-bottom: 24px;
+    }
+
+    .detail-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .detail-section h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .detail-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .detail-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .detail-item label {
+      display: block;
+      font-size: 11px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .detail-item .value {
+      font-size: 15px;
+      color: #fff;
+      font-weight: 500;
+    }
+
+    .detail-item .value.empty {
+      color: #475569;
+      font-style: italic;
+    }
+
+    .status-display {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-dot-large {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .checklist-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .checklist-checkbox {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 2px solid #475569;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .checklist-checkbox.checked {
+      background: #10b981;
+      border-color: #10b981;
+    }
+
+    .checklist-checkbox.checked::after {
+      content: '✓';
+      color: #fff;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .checklist-text {
+      flex: 1;
+      font-size: 14px;
+      color: #e2e8f0;
+    }
+
+    .checklist-text.checked {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
   </style>
 </head>
 <body>
@@ -451,6 +672,88 @@
   <!-- Footer -->
   <div class="footer">
     Dashboard Público · <span class="version" id="version">v1.2.0</span>
+  </div>
+
+  <!-- Modal de Detalhes -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">
+          <h2 id="modalProjectName">Nome da Obra</h2>
+          <p id="modalProjectStore">🏪 Loja</p>
+        </div>
+        <button class="modal-close" id="modalClose">×</button>
+      </div>
+      
+      <div class="modal-body">
+        <!-- Informações Básicas -->
+        <div class="detail-section">
+          <h3>📋 Informações Básicas</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Status da Obra</label>
+              <div id="modalStatus"></div>
+            </div>
+            <div class="detail-item">
+              <label>Categoria</label>
+              <div class="value" id="modalCategory"></div>
+            </div>
+            <div class="detail-item">
+              <label>Cliente</label>
+              <div class="value" id="modalClientName"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Datas -->
+        <div class="detail-section">
+          <h3>📅 Prazos</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Previsão de Início</label>
+              <div class="value" id="modalForecastStart"></div>
+            </div>
+            <div class="detail-item">
+              <label>Previsão de Término</label>
+              <div class="value" id="modalForecastEnd"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Responsáveis -->
+        <div class="detail-section">
+          <h3>👥 Responsáveis</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Integradora</label>
+              <div class="value" id="modalIntegrator"></div>
+            </div>
+            <div class="detail-item">
+              <label>Montadora</label>
+              <div class="value" id="modalAssembler"></div>
+            </div>
+            <div class="detail-item">
+              <label>Eletricista</label>
+              <div class="value" id="modalElectrician"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Observações -->
+        <div class="detail-section" id="modalObservationsSection" style="display: none;">
+          <h3>📝 Observações</h3>
+          <div class="detail-item">
+            <div class="value" id="modalObservations"></div>
+          </div>
+        </div>
+
+        <!-- Checklist -->
+        <div class="detail-section" id="modalChecklistSection" style="display: none;">
+          <h3>✅ Checklist</h3>
+          <div id="modalChecklist"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
