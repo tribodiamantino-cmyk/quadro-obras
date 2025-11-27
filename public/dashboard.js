@@ -25,6 +25,8 @@ const startDateFromInput = document.getElementById('startDateFrom');
 const startDateToInput = document.getElementById('startDateTo');
 const endDateFromInput = document.getElementById('endDateFrom');
 const endDateToInput = document.getElementById('endDateTo');
+const filtersToggleBtn = document.getElementById('filtersToggleBtn');
+const advancedFilters = document.getElementById('advancedFilters');
 
 // Inicializar
 async function init() {
@@ -32,6 +34,7 @@ async function init() {
     await loadProjects();
     setupFilters();
     setupAdvancedFilters();
+    setupFiltersToggle();
     setupSocket();
   } catch (error) {
     console.error('Erro ao inicializar:', error);
@@ -280,6 +283,23 @@ function setupAdvancedFilters() {
       renderProjects();
     });
   }
+}
+
+// Configurar toggle dos filtros avançados
+function setupFiltersToggle() {
+  if (!filtersToggleBtn || !advancedFilters) return;
+  
+  filtersToggleBtn.addEventListener('click', () => {
+    const isOpen = advancedFilters.classList.contains('show');
+    
+    if (isOpen) {
+      advancedFilters.classList.remove('show');
+      filtersToggleBtn.classList.remove('active');
+    } else {
+      advancedFilters.classList.add('show');
+      filtersToggleBtn.classList.add('active');
+    }
+  });
 }
 
 // Configurar Socket.IO para atualizações em tempo real
