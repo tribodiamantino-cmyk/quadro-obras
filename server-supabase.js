@@ -1405,6 +1405,163 @@ app.get('/api/dashboard', async (req, res) => {
   }
 });
 
+// ==================== ENDPOINT CALENDÁRIO PÚBLICO ====================
+// Calendário com datas das obras para visualização mobile
+app.get('/api/calendar', async (req, res) => {
+  try {
+    const ORGANIZATION_ID = process.env.DASHBOARD_ORG_ID || '3327c3ad-20e0-41d6-8f4b-1b4fcf7310fd';
+    
+    // Buscar todos os projetos com datas e relacionamentos
+    const { data: projects, error: projError } = await supabase
+      .from('projects')
+      .select(`
+        id,
+        name,
+        client_name,
+        start_date,
+        delivery_forecast,
+        gsi_forecast_date,
+        gsi_actual_date,
+        category,
+        archived,
+        store:stores(id, name, code),
+        work_status:work_statuses(id, name, color),
+        integrator:integrators(id, name)
+      `)
+      .eq('organization_id', ORGANIZATION_ID)
+      .order('name', { ascending: true });
+
+    if (projError) throw projError;
+
+    // Transformar em eventos de calendário
+    const events = [];
+    
+    (projects || []).forEach(project => {
+      const baseName = project.client_name || project.name;
+      const storeCode = project.store?.code || '';
+      const statusColor = project.work_status?.color || '#64748b';
+      
+      // Evento: Data de Início
+      if (project.start_date) {
+        events.push({
+          id: `${project.id}-start`,
+          projectId: project.id,
+          title: `🚀 Início: ${baseName}`,
+          date: project.start_date,
+          type: 'start_date',
+          typeLabel: 'Início da Obra',
+          color: '#22c55e', // Verde
+          project: {
+            name: baseName,
+            store: project.store,
+            status: project.work_status,
+            integrator: project.integrator,
+            category: project.category,
+            archived: project.archived
+          }
+        });
+      }
+      
+      // Evento: Previsão de Entrega
+      if (project.delivery_forecast) {
+        events.push({
+          id: `${project.id}-delivery`,
+          projectId: project.id,
+          title: `📦 Entrega: ${baseName}`,
+          date: project.delivery_forecast,
+          type: 'delivery_forecast',
+          typeLabel: 'Previsão de Entrega',
+          color: '#3b82f6', // Azul
+          project: {
+            name: baseName,
+            store: project.store,
+            status: project.work_status,
+            integrator: project.integrator,
+            category: project.category,
+            archived: project.archived
+          }
+        });
+      }
+      
+      // Evento: Previsão GSI
+      if (project.gsi_forecast_date) {
+        events.push({
+          id: `${project.id}-gsi-forecast`,
+          projectId: project.id,
+          title: `📋 GSI Prev: ${baseName}`,
+          date: project.gsi_forecast_date,
+          type: 'gsi_forecast_date',
+          typeLabel: 'Previsão GSI',
+          color: '#f59e0b', // Amarelo/Laranja
+          project: {
+            name: baseName,
+            store: project.store,
+            status: project.work_status,
+            integrator: project.integrator,
+            category: project.category,
+            archived: project.archived
+          }
+        });
+      }
+      
+      // Evento: GSI Efetivo
+      if (project.gsi_actual_date) {
+        events.push({
+          id: `${project.id}-gsi-actual`,
+          projectId: project.id,
+          title: `✅ GSI OK: ${baseName}`,
+          date: project.gsi_actual_date,
+          type: 'gsi_actual_date',
+          typeLabel: 'GSI Confirmado',
+          color: '#10b981', // Verde Esmeralda
+          project: {
+            name: baseName,
+            store: project.store,
+            status: project.work_status,
+            integrator: project.integrator,
+            category: project.category,
+            archived: project.archived
+          }
+        });
+      }
+    });
+
+    // Buscar lojas para filtro
+    const { data: stores } = await supabase
+      .from('stores')
+      .select('id, name, code')
+      .eq('organization_id', ORGANIZATION_ID)
+      .eq('active', true)
+      .order('name', { ascending: true });
+
+    // Buscar integradoras para filtro
+    const { data: integrators } = await supabase
+      .from('integrators')
+      .select('id, name')
+      .eq('organization_id', ORGANIZATION_ID)
+      .order('name', { ascending: true });
+
+    res.json({
+      events: events || [],
+      stores: stores || [],
+      integrators: integrators || [],
+      eventTypes: [
+        { type: 'start_date', label: 'Início da Obra', color: '#22c55e', icon: '🚀' },
+        { type: 'delivery_forecast', label: 'Previsão de Entrega', color: '#3b82f6', icon: '📦' },
+        { type: 'gsi_forecast_date', label: 'Previsão GSI', color: '#f59e0b', icon: '📋' },
+        { type: 'gsi_actual_date', label: 'GSI Confirmado', color: '#10b981', icon: '✅' }
+      ],
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Erro ao buscar calendário:', error);
+    res.status(500).json({ 
+      message: 'Erro ao carregar calendário',
+      error: error.message 
+    });
+  }
+});
+
 const PORT = process.env.PORT || 4000;
 
 server.listen(PORT, () => {
