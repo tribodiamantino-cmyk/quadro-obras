@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "start": "node server-supabase.js",
+    "start:railway": "node server-railway.js",
     "dev": "nodemon --watch src --watch public --watch server-supabase.js server-supabase.js",
+    "dev:railway": "nodemon --watch src --watch public --watch server-railway.js server-railway.js",
     "dev:verbose": "nodemon --watch src --watch public --watch server-supabase.js --verbose server-supabase.js",
     "prod": "NODE_ENV=production node server-supabase.js",
+    "prod:railway": "NODE_ENV=production node server-railway.js",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "node prisma/seed.js",
@@ -27,6 +30,7 @@
     "express-validator": "^7.2.0",
     "jsonwebtoken": "^9.0.2",
     "nanoid": "^5.0.7",
+    "pg": "^8.13.1",
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
