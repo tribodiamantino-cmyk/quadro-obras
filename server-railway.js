@@ -25,6 +25,52 @@ app.use(express.static('public'));
 
 console.log('🚀 Iniciando servidor Railway PostgreSQL...');
 
+// ==================== MIGRAÇÃO AUTOMÁTICA ====================
+async function runMigrations() {
+  try {
+    console.log('🔄 Executando migrações...');
+    
+    // Criar tabela user_stores se não existir
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS user_stores (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, store_id)
+      )
+    `);
+    
+    // Adicionar coluna all_stores_access se não existir
+    await db.query(`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = 'all_stores_access'
+        ) THEN
+          ALTER TABLE users ADD COLUMN all_stores_access BOOLEAN DEFAULT true;
+        END IF;
+      END $$;
+    `);
+    
+    // Criar índices
+    await db.query(`
+      CREATE INDEX IF NOT EXISTS idx_user_stores_user_id ON user_stores(user_id)
+    `);
+    await db.query(`
+      CREATE INDEX IF NOT EXISTS idx_user_stores_store_id ON user_stores(store_id)
+    `);
+    
+    console.log('✅ Migrações concluídas com sucesso!');
+  } catch (error) {
+    console.error('❌ Erro ao executar migrações:', error);
+  }
+}
+
+// Executar migrações no startup
+runMigrations().catch(console.error);
+
 // ==================== HEALTH CHECK ====================
 app.get('/health', async (req, res) => {
   try {
