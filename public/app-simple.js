@@ -1848,25 +1848,55 @@ window.updateProjectStatus = async function(projectId, newStatusId) {
   }
 };
 
-// Atualizar campo individual do painel de detalhes
+// Atualizar campo individual do painel de detalhes - OTIMIZADO
 window.updateProjectField = async function(projectId, fieldName, fieldValue) {
   try {
-    // Enviar direto com o nome do campo em snake_case (formato do banco)
+    // UPDATE OTIMISTA: Atualizar cache local ANTES da API
+    const project = state.allProjects?.find(p => p.id === projectId);
+    const currentProject = state.currentProject;
+    const oldValue = project?.[fieldName];
+    
+    // Atualizar localmente primeiro
+    if (project) {
+      project[fieldName] = fieldValue || null;
+    }
+    if (currentProject && currentProject.id === projectId) {
+      currentProject[fieldName] = fieldValue || null;
+    }
+    
+    // Marcar atualização local
+    lastLocalUpdate = Date.now();
+    
+    // Enviar para API em background
     const res = await api(`/api/projects/${projectId}`, {
       method: 'PATCH',
       body: JSON.stringify({ [fieldName]: fieldValue || null })
     });
     
     if (res.ok) {
-      await loadState();
+      // Sucesso - não precisa fazer nada, já atualizamos localmente
+      console.log(`✅ Campo ${fieldName} atualizado`);
     } else {
+      // Erro - reverter alteração local
       const error = await res.json();
-      alert(error.message || 'Erro ao atualizar campo');
-      await loadState();
+      console.error('❌ Erro ao atualizar campo:', error);
+      
+      // Rollback
+      if (project) {
+        project[fieldName] = oldValue;
+      }
+      if (currentProject && currentProject.id === projectId) {
+        currentProject[fieldName] = oldValue;
+      }
+      
+      // Re-renderizar para mostrar valor antigo
+      renderDetails();
+      showToast(error.message || 'Erro ao atualizar campo', 'error');
     }
   } catch (error) {
     console.error('Erro ao atualizar campo:', error);
-    alert('Erro ao atualizar campo');
+    showToast('Erro ao atualizar campo', 'error');
+    // Em caso de erro de rede, recarregar para sincronizar
     await loadState();
   }
 };
