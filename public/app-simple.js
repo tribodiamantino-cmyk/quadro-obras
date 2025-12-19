@@ -778,13 +778,6 @@ function renderDetails() {
   renderGsiFields(p);
   
   // Observações (editável)
-  console.log('🔍 DEBUG details_text:', {
-    projectId: p.id,
-    projectName: p.name,
-    hasDetailsText: !!p.details_text,
-    detailsTextLength: p.details_text ? p.details_text.length : 0,
-    first100chars: p.details_text ? p.details_text.substring(0, 100) : 'VAZIO'
-  });
   projectDetails.value = p.details_text || '';
   
   // Fix para iOS Safari: adicionar evento 'input' aos selects de detalhes
