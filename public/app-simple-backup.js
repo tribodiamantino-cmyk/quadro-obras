@@ -1,31 +1,21 @@
 // Sistema simplificado que funciona com Supabase
 const socket = io();
-
-// ==================== ESTADO GLOBAL OTIMIZADO ====================
 let state = { 
-  projects: [],           // TODOS os projetos (cache local)
-  allProjects: [],        // Backup sem filtro
+  projects: [], 
   currentProject: null, 
   tasks: [], 
-  stores: [],             // Cache - raramente muda
-  workStatuses: [],       // Cache - raramente muda
-  integrators: [],        // Cache - raramente muda
-  assemblers: [],         // Cache - raramente muda
-  electricians: []        // Cache - raramente muda
+  stores: [], 
+  workStatuses: [],
+  integrators: [],
+  assemblers: [],
+  electricians: []
 };
-
-// Filtros locais (não chamam servidor)
 let currentProjectId = null;
-let selectedStoreId = 'all';
-let selectedStatusId = 'all';
-let selectedCategory = 'all';
-let searchQuery = '';
-let showArchived = false;
-
-// Cache control
-let cacheLoaded = false;
-let lastFullLoad = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+let selectedStoreId = 'all'; // Filtro de loja atual
+let selectedStatusId = 'all'; // Filtro de status atual
+let selectedCategory = 'all'; // Filtro de categoria atual
+let searchQuery = ''; // Filtro de busca por nome
+let showArchived = false; // Mostrar obras arquivadas
 
 // ==================== HELPERS DE OTIMIZAÇÃO ====================
 
@@ -230,21 +220,28 @@ const categoryFilterAside = document.getElementById('categoryFilterAside');
 const searchFilterAside = document.getElementById('searchFilterAside');
 const showArchivedCheckbox = document.getElementById('showArchivedCheckbox');
 
-// ==================== CARREGAMENTO OTIMIZADO ====================
-
-// Carregar dados do servidor (apenas uma vez ou quando necessário)
-async function loadFromServer(force = false) {
-  const now = Date.now();
-  
-  // Se já tem cache válido, não recarrega
-  if (!force && cacheLoaded && (now - lastFullLoad) < CACHE_TTL) {
-    console.log('📦 Usando cache local');
-    return;
-  }
-  
+// Carregar estado inicial
+async function loadState() {
   try {
-    console.log('🔄 Carregando dados do servidor...');
-    const res = await api('/api/projects/state');
+    const params = new URLSearchParams();
+    if (selectedStoreId && selectedStoreId !== 'all') {
+      params.append('storeId', selectedStoreId);
+    }
+    if (selectedStatusId && selectedStatusId !== 'all') {
+      params.append('statusId', selectedStatusId);
+    }
+    if (selectedCategory && selectedCategory !== 'all') {
+      params.append('category', selectedCategory);
+    }
+    if (showArchived) {
+      params.append('showArchived', 'true');
+    }
+    // Enviar o projeto selecionado para o backend
+    if (currentProjectId) {
+      params.append('currentProjectId', currentProjectId);
+    }
+    
+    const res = await api(`/api/projects/state?${params.toString()}`);
     
     if (!res.ok) {
       console.error('❌ Erro ao carregar estado:', res.status);
@@ -253,95 +250,23 @@ async function loadFromServer(force = false) {
     }
     
     const data = await res.json();
-    
-    // Armazena TODOS os dados no cache
-    state.allProjects = data.projects || [];
-    state.stores = data.stores || [];
-    state.workStatuses = data.workStatuses || [];
-    state.integrators = data.integrators || [];
-    state.assemblers = data.assemblers || [];
-    state.electricians = data.electricians || [];
-    
-    // Marca cache como carregado
-    cacheLoaded = true;
-    lastFullLoad = now;
-    
-    // Aplica filtros locais
-    applyLocalFilters();
+    state = data;
     
     // Manter o currentProjectId se foi definido pelo usuário
+    // Se não foi definido, usar o que veio do backend
     if (!currentProjectId && data.currentProject?.id) {
       currentProjectId = data.currentProject.id;
     }
     
-    // Renderiza filtros apenas uma vez (depois só atualiza lista)
-    renderStoreFilter();
-    renderStatusFilter();
-    
-    console.log(`✅ Cache carregado: ${state.allProjects.length} projetos`);
+    render();
+    console.log(`✅ Estado carregado: ${state.tasks?.length || 0} tarefas`);
   } catch (error) {
     console.error('❌ Erro ao carregar estado:', error);
     showToast('Erro de conexão', 'error');
   }
 }
 
-// Aplicar filtros LOCALMENTE (sem chamar servidor) - INSTANTÂNEO
-function applyLocalFilters() {
-  let filtered = [...state.allProjects];
-  
-  // Filtro de arquivados
-  if (!showArchived) {
-    filtered = filtered.filter(p => !p.archived);
-  }
-  
-  // Filtro de loja
-  if (selectedStoreId && selectedStoreId !== 'all') {
-    filtered = filtered.filter(p => p.store_id === selectedStoreId);
-  }
-  
-  // Filtro de status
-  if (selectedStatusId && selectedStatusId !== 'all') {
-    filtered = filtered.filter(p => p.work_status_id === selectedStatusId);
-  }
-  
-  // Filtro de categoria
-  if (selectedCategory && selectedCategory !== 'all') {
-    filtered = filtered.filter(p => p.category === selectedCategory);
-  }
-  
-  // Filtro de busca
-  if (searchQuery) {
-    const query = searchQuery.toLowerCase();
-    filtered = filtered.filter(p => 
-      p.name?.toLowerCase().includes(query) ||
-      p.client_name?.toLowerCase().includes(query)
-    );
-  }
-  
-  state.projects = filtered;
-  
-  // Atualiza projeto atual se necessário
-  if (currentProjectId) {
-    state.currentProject = state.allProjects.find(p => p.id === currentProjectId);
-  } else if (filtered.length > 0) {
-    state.currentProject = filtered[0];
-    currentProjectId = filtered[0].id;
-  }
-  
-  // Renderiza apenas a lista (não os filtros - já estão renderizados)
-  renderProjectsList();
-  renderProjectSelect();
-  renderDetails();
-  renderTasks();
-}
-
-// Função legada para compatibilidade (agora usa cache)
-async function loadState() {
-  await loadFromServer();
-  applyLocalFilters();
-}
-
-// Renderizar tudo (usado apenas no primeiro load)
+// Renderizar tudo
 function render() {
   renderStoreFilter();
   renderStatusFilter();
@@ -379,51 +304,54 @@ function renderStatusFilter() {
   statusFilterAside.value = currentValue;
 }
 
-// Filtro de loja - INSTANTÂNEO (filtragem local)
+// Filtro de loja - listener COM DEBOUNCE (compatível iOS)
 if (storeFilterAside) {
+  const debouncedFilter = debounce(() => loadState(), 300);
   const handleStoreChange = () => {
     selectedStoreId = storeFilterAside.value;
-    applyLocalFilters(); // Instantâneo - não chama servidor!
+    debouncedFilter();
   };
+  // iOS Safari pode não disparar 'change', então usar 'input' também
   storeFilterAside.addEventListener('change', handleStoreChange);
   storeFilterAside.addEventListener('input', handleStoreChange);
 }
 
-// Filtro de status - INSTANTÂNEO (filtragem local)
+// Filtro de status - listener COM DEBOUNCE (compatível iOS)
 if (statusFilterAside) {
+  const debouncedFilter = debounce(() => loadState(), 300);
   const handleStatusChange = () => {
     selectedStatusId = statusFilterAside.value;
-    applyLocalFilters(); // Instantâneo - não chama servidor!
+    debouncedFilter();
   };
+  // iOS Safari pode não disparar 'change', então usar 'input' também
   statusFilterAside.addEventListener('change', handleStatusChange);
   statusFilterAside.addEventListener('input', handleStatusChange);
 }
 
-// Filtro de categoria - INSTANTÂNEO (filtragem local)
+// Filtro de categoria - listener COM DEBOUNCE (compatível iOS)
 if (categoryFilterAside) {
+  const debouncedFilter = debounce(() => loadState(), 300);
   const handleCategoryChange = () => {
     selectedCategory = categoryFilterAside.value;
-    applyLocalFilters(); // Instantâneo - não chama servidor!
+    debouncedFilter();
   };
+  // iOS Safari pode não disparar 'change', então usar 'input' também
   categoryFilterAside.addEventListener('change', handleCategoryChange);
   categoryFilterAside.addEventListener('input', handleCategoryChange);
 }
 
-// Checkbox mostrar arquivados - precisa recarregar do servidor se marcado
+// Checkbox mostrar arquivados - listener COM DEBOUNCE
 if (showArchivedCheckbox) {
-  showArchivedCheckbox.addEventListener('change', async () => {
+  const debouncedFilter = debounce(() => loadState(), 300);
+  showArchivedCheckbox.addEventListener('change', () => {
     showArchived = showArchivedCheckbox.checked;
-    if (showArchived) {
-      // Se marcou "mostrar arquivados", precisa buscar do servidor
-      await loadFromServer(true);
-    }
-    applyLocalFilters();
+    debouncedFilter();
   });
 }
 
-// Filtro de busca por nome - INSTANTÂNEO com debounce pequeno
+// Filtro de busca por nome - listener COM DEBOUNCE
 if (searchFilterAside) {
-  const debouncedFilter = debounce(() => applyLocalFilters(), 100); // 100ms apenas para digitar
+  const debouncedFilter = debounce(() => renderProjectsList(), 300);
   const handleSearchChange = () => {
     searchQuery = searchFilterAside.value.trim();
     debouncedFilter();
@@ -874,25 +802,28 @@ function formatDate(dateString) {
   return date.toLocaleDateString('pt-BR');
 }
 
-// Selecionar projeto (versão ULTRA otimizada - instantâneo)
-window.selectProject = function(projectId) {
+// Selecionar projeto (versão otimizada - sem recarregar toda a lista)
+window.selectProject = async function(projectId) {
   if (currentProjectId === projectId) return; // Já está selecionado
   
   currentProjectId = projectId;
   
-  // Atualizar visualmente qual card está ativo (micro-otimização)
-  const currentActive = document.querySelector('.project-item.active');
-  if (currentActive) currentActive.classList.remove('active');
+  // Atualizar visualmente qual card está ativo
+  document.querySelectorAll('.project-item').forEach(item => {
+    item.classList.remove('active');
+  });
   
   const selectedCard = document.querySelector(`.project-item[onclick*="${projectId}"]`);
-  if (selectedCard) selectedCard.classList.add('active');
+  if (selectedCard) {
+    selectedCard.classList.add('active');
+  }
   
-  // Usar os dados que já estão carregados no cache (allProjects para pegar mesmo se filtrado)
-  const project = state.allProjects.find(p => p.id === projectId) || state.projects.find(p => p.id === projectId);
+  // Usar os dados que já estão carregados no state
+  const project = state.projects.find(p => p.id === projectId);
   if (project) {
     state.currentProject = project;
     
-    // Renderizar apenas detalhes e tarefas - SEM delay
+    // Renderizar apenas detalhes e tarefas
     renderDetails();
     renderTasks();
   } else {

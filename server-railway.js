@@ -206,8 +206,10 @@ app.get('/api/projects/state', authenticateToken, async (req, res) => {
   try {
     const orgId = req.user.organizationId;
     const currentProjectId = req.query.currentProjectId;
+    const includeArchived = req.query.includeArchived === 'true';
     
-    // Buscar todos os projetos
+    // Buscar todos os projetos (incluindo arquivados se solicitado)
+    // Otimização: Uma única query com todos os JOINs
     const projects = await db.many(
       `SELECT p.id, p.name, p.details_checklist, p.details_text, p.observations, 
               p.is_current, p.archived, p.category, p.client_name,
@@ -228,7 +230,7 @@ app.get('/api/projects/state', authenticateToken, async (req, res) => {
        LEFT JOIN integrators i ON p.integrator_id = i.id
        LEFT JOIN assemblers a ON p.assembler_id = a.id
        LEFT JOIN electricians e ON p.electrician_id = e.id
-       WHERE p.archived = false AND p.organization_id = $1
+       WHERE p.organization_id = $1 ${includeArchived ? '' : 'AND p.archived = false'}
        ORDER BY p.display_order, p.created_at DESC`,
       [orgId]
     );
