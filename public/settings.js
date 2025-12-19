@@ -368,6 +368,29 @@ window.editUser = async function(userId) {
   document.getElementById('user-password').value = '';
   document.getElementById('user-password').required = false;
   document.getElementById('user-role').value = u.role;
+  
+  // Carregar lojas do usuário
+  try {
+    const allStoresAccess = u.all_stores_access !== false; // Default true se não definido
+    document.getElementById('user-all-stores').checked = allStoresAccess;
+    
+    if (!allStoresAccess) {
+      // Buscar lojas específicas do usuário
+      const res = await api(`/api/users/${userId}`);
+      const userData = await res.json();
+      const userStoreIds = userData.store_ids || [];
+      populateUserStores(userStoreIds);
+      document.getElementById('stores-selection').style.display = 'block';
+    } else {
+      populateUserStores([]);
+      document.getElementById('stores-selection').style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Erro ao carregar lojas do usuário:', error);
+    // Em caso de erro, mostrar todas as lojas desmarcadas
+    populateUserStores([]);
+  }
+  
   document.getElementById('user-modal').classList.add('active');
 };
 
@@ -423,7 +446,23 @@ document.getElementById('user-form').addEventListener('submit', async (e) => {
   const password = document.getElementById('user-password').value;
   const role = document.getElementById('user-role').value;
   
-  const body = { name, email, role };
+  // Coletar configuração de lojas
+  const allStoresAccess = document.getElementById('user-all-stores').checked;
+  const store_ids = [];
+  
+  if (!allStoresAccess) {
+    // Coletar lojas selecionadas
+    const checkboxes = document.querySelectorAll('#user-stores input[type="checkbox"]:checked');
+    checkboxes.forEach(cb => store_ids.push(parseInt(cb.value)));
+  }
+  
+  const body = { 
+    name, 
+    email, 
+    role,
+    all_stores_access: allStoresAccess,
+    store_ids 
+  };
   if (password) body.password = password;
   
   try {
