@@ -820,7 +820,7 @@ function renderDetails() {
   document.getElementById('detail-start-date').innerHTML = `
     <input 
       type="date" 
-      value="${p.start_date || ''}" 
+      value="${formatDateForInput(p.start_date)}" 
       onchange="updateProjectField('${p.id}', 'start_date', this.value)"
       style="width: 100%; background: #1e293b; border: 1px solid #34495e; color: #ecf0f1; padding: 6px; border-radius: 4px; font-size: 12px;"
     >
@@ -830,7 +830,7 @@ function renderDetails() {
   document.getElementById('detail-delivery').innerHTML = `
     <input 
       type="date" 
-      value="${p.delivery_forecast || ''}" 
+      value="${formatDateForInput(p.delivery_forecast)}" 
       onchange="updateProjectField('${p.id}', 'delivery_forecast', this.value)"
       style="width: 100%; background: #1e293b; border: 1px solid #34495e; color: #ecf0f1; padding: 6px; border-radius: 4px; font-size: 12px;"
     >
@@ -872,6 +872,18 @@ function formatDate(dateString) {
   if (!dateString) return null;
   const date = new Date(dateString);
   return date.toLocaleDateString('pt-BR');
+}
+
+// Helper para formatar data para input type="date" (yyyy-MM-dd)
+function formatDateForInput(dateString) {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0];
+  } catch {
+    return '';
+  }
 }
 
 // Selecionar projeto (versão ULTRA otimizada - instantâneo)
