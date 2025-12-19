@@ -231,7 +231,7 @@ app.get('/api/projects/state', authenticateToken, async (req, res) => {
       `SELECT t.* FROM tasks t
        INNER JOIN projects p ON t.project_id = p.id
        WHERE p.organization_id = $1
-       ORDER BY t.order_position, t.created_at`,
+       ORDER BY t.created_at`,
       [orgId]
     );
 
@@ -571,7 +571,7 @@ app.get('/api/settings/electricians', authenticateToken, async (req, res) => {
 app.get('/api/settings/work-statuses', authenticateToken, async (req, res) => {
   try {
     const statuses = await db.many(
-      'SELECT * FROM work_statuses WHERE organization_id = $1 AND active = true ORDER BY order_position',
+      'SELECT * FROM work_statuses WHERE organization_id = $1 ORDER BY created_at',
       [req.user.organizationId]
     );
     res.json(statuses);
@@ -610,7 +610,7 @@ app.get('/api/state', authenticateToken, async (req, res) => {
       const tasks = await db.many(
         `SELECT * FROM tasks 
          WHERE project_id = $1 
-         ORDER BY order_position, created_at`,
+         ORDER BY created_at`,
         [project.id]
       );
       project.tasks = tasks;
