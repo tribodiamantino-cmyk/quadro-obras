@@ -3,7 +3,6 @@
 
 let allProjects = [];
 let allTasks = [];
-let workStatuses = [];
 let stores = [];
 let integrators = [];
 let assemblers = [];
@@ -11,14 +10,14 @@ let electricians = [];
 let selectedTask = null;
 let selectedProjectId = null;
 
-// Mapeamento de status antigos (texto) para os novos work_statuses
-const statusMapping = {
-  'Criado': 'Criado',
-  'Em separação': 'Em separação',
-  'Pendencia': 'Pendência',
-  'Em romaneio': 'Em romaneio',
-  'Entregue': 'Entregue'
-};
+// Status das TAREFAS (não confundir com work_statuses das obras)
+const taskStatuses = [
+  { name: 'Criado', color: '#ef4444', emoji: '📝' },
+  { name: 'Em separação', color: '#f59e0b', emoji: '📦' },
+  { name: 'Pendencia', color: '#eab308', emoji: '⏸️' },
+  { name: 'Em romaneio', color: '#3b82f6', emoji: '🚚' },
+  { name: 'Entregue', color: '#22c55e', emoji: '✅' }
+];
 
 // Filtros
 let filters = {
@@ -37,7 +36,6 @@ async function init() {
   try {
     await Promise.all([
       loadProjects(),
-      loadWorkStatuses(),
       loadStores(),
       loadIntegrators(),
       loadAssemblers(),
@@ -59,12 +57,6 @@ async function init() {
 async function loadProjects() {
   const response = await api('/api/projects');
   allProjects = await response.json();
-}
-
-async function loadWorkStatuses() {
-  const response = await api('/api/settings/work-statuses');
-  workStatuses = await response.json();
-  workStatuses.sort((a, b) => a.order_position - b.order_position);
 }
 
 async function loadStores() {
@@ -210,29 +202,18 @@ function renderBoard() {
   // Atualizar estatísticas
   updateStats(filteredTasks);
   
-  // Renderizar colunas
-  const columns = workStatuses.filter(s => s.active).map(status => {
-    // Filtrar tarefas tanto por work_status_id quanto por status (texto)
-    const tasksInColumn = filteredTasks.filter(t => {
-      // Primeiro tenta por ID
-      if (t.work_status_id === status.id) return true;
-      
-      // Se não tiver work_status_id, tenta por nome do status (direto ou mapeado)
-      if (!t.work_status_id && t.status) {
-        const mappedStatus = statusMapping[t.status] || t.status;
-        if (mappedStatus === status.name) return true;
-      }
-      
-      return false;
-    });
+  // Renderizar colunas com os status das TAREFAS
+  const columns = taskStatuses.map(status => {
+    // Filtrar tarefas por status (campo status da tarefa)
+    const tasksInColumn = filteredTasks.filter(t => t.status === status.name);
     
     console.log(`📊 Coluna "${status.name}": ${tasksInColumn.length} tarefas`);
     
     return `
-      <div class="column" data-status-id="${status.id}" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+      <div class="column" data-status="${status.name}" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
         <div class="column-header" style="border-color: ${status.color}">
           <div class="column-title">
-            <span>${getStatusEmoji(status.name)}</span>
+            <span>${status.emoji}</span>
             <span>${status.name}</span>
           </div>
           <div class="column-count" style="color: ${status.color}">${tasksInColumn.length}</div>
@@ -322,27 +303,13 @@ function updateStats(tasks) {
   const uniqueProjects = new Set(tasks.map(t => t.project.id));
   document.getElementById('total-projects').textContent = uniqueProjects.size;
   
-  const completedStatuses = workStatuses
-    .filter(s => s.name.toLowerCase().includes('conclu') || s.name.toLowerCase().includes('entregue'))
-    .map(s => s.id);
-  
-  const completedTasks = tasks.filter(t => completedStatuses.includes(t.work_status_id));
+  // Tarefas concluídas (status = 'Entregue')
+  const completedTasks = tasks.filter(t => t.status === 'Entregue');
   document.getElementById('completed-tasks').textContent = completedTasks.length;
   
-  const progressTasks = tasks.filter(t => !completedStatuses.includes(t.work_status_id));
+  // Tarefas em andamento (todos os outros status)
+  const progressTasks = tasks.filter(t => t.status !== 'Entregue');
   document.getElementById('progress-tasks').textContent = progressTasks.length;
-}
-
-// Obter emoji do status
-function getStatusEmoji(statusName) {
-  const name = statusName.toLowerCase();
-  if (name.includes('aguard') || name.includes('pendent')) return '📋';
-  if (name.includes('andamento') || name.includes('execu')) return '🔄';
-  if (name.includes('conclu') || name.includes('finaliz')) return '✅';
-  if (name.includes('entregue') || name.includes('entreg')) return '📦';
-  if (name.includes('pausad') || name.includes('suspen')) return '⏸️';
-  if (name.includes('cancel')) return '❌';
-  return '📌';
 }
 
 // Configurar listeners de filtros
@@ -441,21 +408,21 @@ async function drop(ev) {
   
   const taskId = ev.dataTransfer.getData('taskId');
   const projectId = ev.dataTransfer.getData('projectId');
-  const newStatusId = column.dataset.statusId;
+  const newStatus = column.dataset.status; // Agora é o nome do status, não o ID
   
-  if (!taskId || !projectId || !newStatusId) return;
+  if (!taskId || !projectId || !newStatus) return;
   
   try {
     // Atualizar no servidor
     await api(`/api/projects/${projectId}/tasks/${taskId}`, {
       method: 'PUT',
-      body: JSON.stringify({ work_status_id: newStatusId })
+      body: JSON.stringify({ status: newStatus })
     });
     
     // Atualizar localmente
     const task = allTasks.find(t => t.id === taskId && t.project.id === projectId);
     if (task) {
-      task.work_status_id = newStatusId;
+      task.status = newStatus;
     }
     
     // Re-renderizar
@@ -480,12 +447,12 @@ function openTaskModal(taskId, projectId) {
   selectedProjectId = projectId;
   
   const project = task.project;
-  const status = workStatuses.find(s => s.id === task.work_status_id);
+  const status = taskStatuses.find(s => s.name === task.status);
   
   document.getElementById('modal-task-name').textContent = task.name;
   
   document.getElementById('modal-task-info').innerHTML = `
-    <strong>Status:</strong> ${status?.name || 'Não definido'}<br>
+    <strong>Status:</strong> ${status?.emoji || ''} ${task.status || 'Não definido'}<br>
     <strong>Descrição:</strong> ${task.description || 'Sem descrição'}<br>
     <strong>Observações:</strong> ${task.observations || 'Sem observações'}
   `;
