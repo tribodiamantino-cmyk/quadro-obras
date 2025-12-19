@@ -934,6 +934,7 @@ window.selectProject = function(projectId) {
   const project = state.allProjects.find(p => p.id === projectId) || state.projects.find(p => p.id === projectId);
   if (project) {
     state.currentProject = project;
+    state.tasks = project.tasks || []; // ← CARREGAR TAREFAS DO PROJETO
     
     // Renderizar apenas detalhes e tarefas - SEM delay
     renderDetails();

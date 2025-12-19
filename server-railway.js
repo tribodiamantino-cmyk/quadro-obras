@@ -120,6 +120,40 @@ async function runMigrations() {
       END $$;
     `);
     
+    // Atualizar constraint de status na tabela tasks para aceitar os 5 status do sistema
+    await db.query(`
+      DO $$ 
+      BEGIN
+        -- Remover constraint antiga se existir
+        IF EXISTS (
+          SELECT 1 FROM information_schema.table_constraints 
+          WHERE table_name = 'tasks' AND constraint_name = 'tasks_status_check'
+        ) THEN
+          ALTER TABLE tasks DROP CONSTRAINT tasks_status_check;
+        END IF;
+        
+        -- Adicionar nova constraint com os 5 status
+        ALTER TABLE tasks ADD CONSTRAINT tasks_status_check 
+          CHECK (status IN ('Criado', 'Em separação', 'Pendencia', 'Em romaneio', 'Entregue'));
+      EXCEPTION
+        WHEN duplicate_object THEN
+          NULL; -- Constraint já existe, ignorar
+      END $$;
+    `);
+    
+    // Adicionar coluna display_order na tabela tasks se não existir
+    await db.query(`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'tasks' AND column_name = 'display_order'
+        ) THEN
+          ALTER TABLE tasks ADD COLUMN display_order INTEGER DEFAULT 0;
+        END IF;
+      END $$;
+    `);
+    
     console.log('✅ Migrações concluídas com sucesso!');
   } catch (error) {
     console.error('❌ Erro ao executar migrações:', error);
