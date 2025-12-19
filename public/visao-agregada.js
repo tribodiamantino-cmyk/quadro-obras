@@ -11,6 +11,15 @@ let electricians = [];
 let selectedTask = null;
 let selectedProjectId = null;
 
+// Mapeamento de status antigos (texto) para os novos work_statuses
+const statusMapping = {
+  'Criado': 'Criado',
+  'Em separação': 'Em separação',
+  'Pendencia': 'Pendência',
+  'Em romaneio': 'Em romaneio',
+  'Entregue': 'Entregue'
+};
+
 // Filtros
 let filters = {
   store: '',
@@ -109,6 +118,9 @@ function extractAllTasks() {
   });
   
   console.log(`✅ Extraídas ${allTasks.length} tarefas de ${allProjects.length} obras`);
+  if (allTasks.length > 0) {
+    console.log('📋 Exemplo de tarefa:', allTasks[0]);
+  }
 }
 
 // Popular filtros
@@ -200,7 +212,21 @@ function renderBoard() {
   
   // Renderizar colunas
   const columns = workStatuses.filter(s => s.active).map(status => {
-    const tasksInColumn = filteredTasks.filter(t => t.work_status_id === status.id);
+    // Filtrar tarefas tanto por work_status_id quanto por status (texto)
+    const tasksInColumn = filteredTasks.filter(t => {
+      // Primeiro tenta por ID
+      if (t.work_status_id === status.id) return true;
+      
+      // Se não tiver work_status_id, tenta por nome do status (direto ou mapeado)
+      if (!t.work_status_id && t.status) {
+        const mappedStatus = statusMapping[t.status] || t.status;
+        if (mappedStatus === status.name) return true;
+      }
+      
+      return false;
+    });
+    
+    console.log(`📊 Coluna "${status.name}": ${tasksInColumn.length} tarefas`);
     
     return `
       <div class="column" data-status-id="${status.id}" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
