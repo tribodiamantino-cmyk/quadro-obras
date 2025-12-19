@@ -316,12 +316,46 @@ window.openUserModal = function() {
   document.getElementById('user-password').value = '';
   document.getElementById('user-password').required = true;
   document.getElementById('user-role').value = '';
+  
+  // Lojas - novo usuário tem acesso a todas por padrão
+  document.getElementById('user-all-stores').checked = true;
+  document.getElementById('stores-selection').style.display = 'none';
+  populateUserStores([]);
+  
   document.getElementById('user-modal').classList.add('active');
 };
 
 window.closeUserModal = function() {
   document.getElementById('user-modal').classList.remove('active');
 };
+
+// Toggle seleção de lojas
+window.toggleStoresSelection = function() {
+  const allStoresCheckbox = document.getElementById('user-all-stores');
+  const storesSelection = document.getElementById('stores-selection');
+  
+  if (allStoresCheckbox.checked) {
+    storesSelection.style.display = 'none';
+  } else {
+    storesSelection.style.display = 'block';
+  }
+};
+
+// Popular checkboxes de lojas
+function populateUserStores(userStores = []) {
+  const container = document.getElementById('user-stores');
+  if (!container || !stores || stores.length === 0) return;
+  
+  container.innerHTML = stores.map(store => {
+    const isChecked = userStores.includes(store.id);
+    return `
+      <label style="display: flex; align-items: center; gap: 8px; padding: 4px; cursor: pointer;">
+        <input type="checkbox" value="${store.id}" ${isChecked ? 'checked' : ''} />
+        <span>${store.code} - ${store.name}</span>
+      </label>
+    `;
+  }).join('');
+}
 
 window.editUser = async function(userId) {
   const u = users.find(user => user.id === userId);
