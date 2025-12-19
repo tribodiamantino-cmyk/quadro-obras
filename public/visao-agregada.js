@@ -243,9 +243,12 @@ function renderTaskCard(task, statusColor) {
   const clientName = project.client_name || 'Sem cliente';
   const typeIcon = project.category === 'reforma' ? '🔧' : '🏗️';
   
+  // Nome da tarefa (pode ser 'name' ou 'title')
+  const taskName = task.name || task.title || 'Sem nome';
+  
   // Definir responsável baseado no tipo de tarefa
   let responsible = '';
-  const taskNameLower = task.name.toLowerCase();
+  const taskNameLower = taskName.toLowerCase();
   if (taskNameLower.includes('montag') || taskNameLower.includes('instalação')) {
     responsible = project.assembler?.name || '';
   } else if (taskNameLower.includes('elétric') || taskNameLower.includes('eletric')) {
@@ -262,7 +265,7 @@ function renderTaskCard(task, statusColor) {
          style="border-left-color: ${statusColor}">
       
       <div class="task-header">
-        <div class="task-name">${task.name}</div>
+        <div class="task-name">${taskName}</div>
         ${typeIcon && `<div class="task-tag">${typeIcon}</div>`}
       </div>
       
@@ -448,8 +451,9 @@ function openTaskModal(taskId, projectId) {
   
   const project = task.project;
   const status = taskStatuses.find(s => s.name === task.status);
+  const taskName = task.name || task.title || 'Sem nome';
   
-  document.getElementById('modal-task-name').textContent = task.name;
+  document.getElementById('modal-task-name').textContent = taskName;
   
   document.getElementById('modal-task-info').innerHTML = `
     <strong>Status:</strong> ${status?.emoji || ''} ${task.status || 'Não definido'}<br>
