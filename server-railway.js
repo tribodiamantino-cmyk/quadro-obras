@@ -30,17 +30,6 @@ async function runMigrations() {
   try {
     console.log('🔄 Executando migrações...');
     
-    // Criar tabela user_stores se não existir
-    await db.query(`
-      CREATE TABLE IF NOT EXISTS user_stores (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(user_id, store_id)
-      )
-    `);
-    
     // Adicionar coluna all_stores_access se não existir
     await db.query(`
       DO $$ 
@@ -54,12 +43,47 @@ async function runMigrations() {
       END $$;
     `);
     
+    // Criar tabela user_stores se não existir (user_id é UUID para match com users.id)
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS user_stores (
+        id SERIAL PRIMARY KEY,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, store_id)
+      )
+    `);
+    
     // Criar índices
     await db.query(`
       CREATE INDEX IF NOT EXISTS idx_user_stores_user_id ON user_stores(user_id)
     `);
     await db.query(`
       CREATE INDEX IF NOT EXISTS idx_user_stores_store_id ON user_stores(store_id)
+    `);
+    
+    // Criar tabela audit_logs se não existir
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id SERIAL PRIMARY KEY,
+        user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        action VARCHAR(50) NOT NULL,
+        entity_type VARCHAR(50) NOT NULL,
+        entity_id VARCHAR(100),
+        old_values JSONB,
+        new_values JSONB,
+        ip_address VARCHAR(50),
+        user_agent TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    // Criar índices para audit_logs
+    await db.query(`
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id)
+    `);
+    await db.query(`
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at)
     `);
     
     console.log('✅ Migrações concluídas com sucesso!');
