@@ -2162,16 +2162,17 @@ loadVersion();
 // ==================== RESIZE DE COLUNAS ====================
 function setupColumnResizers() {
   const resizers = document.querySelectorAll('.col-resizer');
-  const columns = document.querySelectorAll('main .col');
+  // Incluir coluna de detalhes e todas as colunas de tarefas
+  const allCols = document.querySelectorAll('main .col');
   
-  if (!resizers.length || !columns.length) return;
+  if (!resizers.length || !allCols.length) return;
   
   // Carregar tamanhos salvos do localStorage
   const savedSizes = localStorage.getItem('columnSizes');
   if (savedSizes) {
     try {
       const sizes = JSON.parse(savedSizes);
-      columns.forEach((col, i) => {
+      allCols.forEach((col, i) => {
         if (sizes[i]) {
           col.style.flex = `0 0 ${sizes[i]}px`;
           col.style.width = `${sizes[i]}px`;
@@ -2234,7 +2235,7 @@ function setupColumnResizers() {
       document.body.style.userSelect = '';
       
       // Salvar tamanhos no localStorage
-      const sizes = Array.from(columns).map(col => col.getBoundingClientRect().width);
+      const sizes = Array.from(allCols).map(col => col.getBoundingClientRect().width);
       localStorage.setItem('columnSizes', JSON.stringify(sizes));
     };
     
@@ -2252,7 +2253,7 @@ function setupColumnResizers() {
   // Duplo clique para resetar
   resizers.forEach(resizer => {
     resizer.addEventListener('dblclick', () => {
-      columns.forEach(col => {
+      allCols.forEach(col => {
         col.style.flex = '1';
         col.style.width = '';
       });
