@@ -90,6 +90,36 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_audit_logs_organization_id ON audit_logs(organization_id)
     `);
     
+    // Adicionar novas colunas à tabela projects
+    await db.query(`
+      DO $$ 
+      BEGIN
+        -- Adicionar coluna city
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'projects' AND column_name = 'city'
+        ) THEN
+          ALTER TABLE projects ADD COLUMN city VARCHAR(255);
+        END IF;
+        
+        -- Adicionar coluna assembler_start_date
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'projects' AND column_name = 'assembler_start_date'
+        ) THEN
+          ALTER TABLE projects ADD COLUMN assembler_start_date DATE;
+        END IF;
+        
+        -- Adicionar coluna electrician_start_date
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'projects' AND column_name = 'electrician_start_date'
+        ) THEN
+          ALTER TABLE projects ADD COLUMN electrician_start_date DATE;
+        END IF;
+      END $$;
+    `);
+    
     console.log('✅ Migrações concluídas com sucesso!');
   } catch (error) {
     console.error('❌ Erro ao executar migrações:', error);

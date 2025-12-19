@@ -74,6 +74,19 @@
       <div class="col details-col" data-status="__DETAILS__">
         <h2>Detalhes da Obra</h2>
         
+        <!-- Observações (Editável) - MOVIDO PARA O TOPO -->
+        <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #95a5a6; font-size: 11px;">Observações:</label>
+        <textarea id="projectDetails" placeholder="Adicione observações sobre a obra..."></textarea>
+        <div style="margin-top: 10px; margin-bottom: 15px; display: flex; gap: 8px; align-items: center;">
+          <button id="btnSaveDetails" onclick="saveProjectDetails()" 
+            style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+            💾 Salvar Alterações
+          </button>
+          <span id="saveStatus" style="font-size: 11px; color: #94a3b8;"></span>
+        </div>
+        
+        <hr style="margin: 12px 0; border: none; border-top: 1px solid #34495e;">
+        
         <!-- Informações Fixas (Somente Leitura) -->
         <div id="project-info-display">
           <div class="info-field">
@@ -83,6 +96,10 @@
           <div class="info-field">
             <label>Loja:</label>
             <span id="detail-store">-</span>
+          </div>
+          <div class="info-field">
+            <label>Cidade:</label>
+            <span id="detail-city">-</span>
           </div>
           <div class="info-field">
             <label>Status:</label>
@@ -101,8 +118,16 @@
             <span id="detail-assembler">-</span>
           </div>
           <div class="info-field">
+            <label>Data Início Montagem:</label>
+            <span id="detail-assembler-start">-</span>
+          </div>
+          <div class="info-field">
             <label>Eletricista:</label>
             <span id="detail-electrician">-</span>
+          </div>
+          <div class="info-field">
+            <label>Data Início Elétrica:</label>
+            <span id="detail-electrician-start">-</span>
           </div>
           <div class="info-field">
             <label>Data Início:</label>
@@ -115,6 +140,9 @@
           <div class="info-field">
             <label>Localização:</label>
             <span id="detail-location">-</span>
+            <button onclick="openDetailLocationInMaps()" style="margin-left: 8px; padding: 4px 8px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;" title="Abrir no Google Maps">
+              📍 Maps
+            </button>
           </div>
         </div>
         
@@ -139,17 +167,6 @@
               </div>
             </div>
           </div>
-        </div>
-        
-        <!-- Observações (Editável) -->
-        <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #95a5a6; font-size: 11px;">Observações:</label>
-        <textarea id="projectDetails" placeholder="Adicione observações sobre a obra..."></textarea>
-        <div style="margin-top: 10px; display: flex; gap: 8px; align-items: center;">
-          <button id="btnSaveDetails" onclick="saveProjectDetails()" 
-            style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-            💾 Salvar Alterações
-          </button>
-          <span id="saveStatus" style="font-size: 11px; color: #94a3b8;"></span>
         </div>
       </div>
 
@@ -223,14 +240,19 @@
           </div>
           
           <div class="form-group">
+            <label for="project-city">Cidade</label>
+            <input type="text" id="project-city" placeholder="Cidade da obra" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
             <label for="project-status">Status *</label>
             <select id="project-status" required>
               <option value="">Selecione...</option>
             </select>
           </div>
-        </div>
-        
-        <div class="form-row">
+          
           <div class="form-group">
             <label for="project-category">Categoria *</label>
             <select id="project-category" required>
@@ -256,6 +278,11 @@
             </select>
             <input type="text" id="new-assembler" placeholder="Nome do novo montador" style="display: none; margin-top: 8px;" />
           </div>
+          
+          <div class="form-group">
+            <label for="project-assembler-start-date">Data Início Montagem</label>
+            <input type="date" id="project-assembler-start-date" />
+          </div>
         </div>
         
         <div class="form-row">
@@ -265,6 +292,11 @@
               <option value="">Selecione...</option>
             </select>
             <input type="text" id="new-electrician" placeholder="Nome do novo eletricista" style="display: none; margin-top: 8px;" />
+          </div>
+          
+          <div class="form-group">
+            <label for="project-electrician-start-date">Data Início Elétrica</label>
+            <input type="date" id="project-electrician-start-date" />
           </div>
         </div>
         
@@ -283,7 +315,12 @@
         <div class="form-row">
           <div class="form-group">
             <label for="project-location">Localização (Endereço)</label>
-            <input type="text" id="project-location" placeholder="Endereço da obra" />
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="project-location" placeholder="Endereço da obra" style="flex: 1;" />
+              <button type="button" onclick="openLocationInMaps()" style="padding: 8px 16px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 14px;" title="Abrir no Google Maps">
+                📍 Maps
+              </button>
+            </div>
           </div>
         </div>
         
@@ -328,6 +365,13 @@
           </div>
           
           <div class="form-group">
+            <label for="edit-project-city">Cidade</label>
+            <input type="text" id="edit-project-city" placeholder="Cidade da obra" />
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
             <label for="edit-project-status">Status *</label>
             <select id="edit-project-status" required>
               <option value="">Selecione...</option>
@@ -351,6 +395,11 @@
             </select>
             <input type="text" id="edit-new-assembler" placeholder="Nome do novo montador" style="display: none; margin-top: 8px;" />
           </div>
+          
+          <div class="form-group">
+            <label for="edit-project-assembler-start-date">Data Início Montagem</label>
+            <input type="date" id="edit-project-assembler-start-date" />
+          </div>
         </div>
         
         <div class="form-row">
@@ -360,6 +409,11 @@
               <option value="">Selecione...</option>
             </select>
             <input type="text" id="edit-new-electrician" placeholder="Nome do novo eletricista" style="display: none; margin-top: 8px;" />
+          </div>
+          
+          <div class="form-group">
+            <label for="edit-project-electrician-start-date">Data Início Elétrica</label>
+            <input type="date" id="edit-project-electrician-start-date" />
           </div>
         </div>
         
@@ -378,7 +432,12 @@
         <div class="form-row">
           <div class="form-group">
             <label for="edit-project-location">Localização (Endereço)</label>
-            <input type="text" id="edit-project-location" placeholder="Endereço da obra" />
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="edit-project-location" placeholder="Endereço da obra" style="flex: 1;" />
+              <button type="button" onclick="openEditLocationInMaps()" style="padding: 8px 16px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 14px;" title="Abrir no Google Maps">
+                📍 Maps
+              </button>
+            </div>
           </div>
         </div>
         

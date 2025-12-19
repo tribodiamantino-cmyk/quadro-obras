@@ -739,6 +739,17 @@ function renderDetails() {
     </select>
   `;
   
+  // Cidade (text input)
+  document.getElementById('detail-city').innerHTML = `
+    <input 
+      type="text" 
+      value="${p.city || ''}" 
+      onchange="updateProjectField('${p.id}', 'city', this.value)"
+      placeholder="Digite a cidade"
+      style="width: 100%; background: #1e293b; border: 1px solid #34495e; color: #ecf0f1; padding: 6px; border-radius: 4px; font-size: 12px;"
+    >
+  `;
+  
   // Status (select)
   const statusOptions = (state.workStatuses || []).map(s => 
     `<option value="${s.id}" ${s.id === p.work_status_id ? 'selected' : ''}>${s.name}</option>`
@@ -800,6 +811,16 @@ function renderDetails() {
     </select>
   `;
   
+  // Data Início Montagem (date input)
+  document.getElementById('detail-assembler-start').innerHTML = `
+    <input 
+      type="date" 
+      value="${formatDateForInput(p.assembler_start_date)}" 
+      onchange="updateProjectField('${p.id}', 'assembler_start_date', this.value)"
+      style="width: 100%; background: #1e293b; border: 1px solid #34495e; color: #ecf0f1; padding: 6px; border-radius: 4px; font-size: 12px;"
+    >
+  `;
+  
   // Eletricista (select)
   const electricianOptions = (state.electricians || []).map(e => 
     `<option value="${e.id}" ${e.id === p.electrician_id ? 'selected' : ''}>${e.name}</option>`
@@ -814,6 +835,16 @@ function renderDetails() {
       <option value="">Selecione...</option>
       ${electricianOptions}
     </select>
+  `;
+  
+  // Data Início Elétrica (date input)
+  document.getElementById('detail-electrician-start').innerHTML = `
+    <input 
+      type="date" 
+      value="${formatDateForInput(p.electrician_start_date)}" 
+      onchange="updateProjectField('${p.id}', 'electrician_start_date', this.value)"
+      style="width: 100%; background: #1e293b; border: 1px solid #34495e; color: #ecf0f1; padding: 6px; border-radius: 4px; font-size: 12px;"
+    >
   `;
   
   // Data Início (date input)
@@ -1601,6 +1632,9 @@ window.editProject = function(projectId) {
   document.getElementById('edit-project-delivery').value = project.delivery_forecast || '';
   document.getElementById('edit-project-location').value = project.location_address || '';
   document.getElementById('edit-project-gsi-forecast').value = project.gsi_forecast_date || '';
+  document.getElementById('edit-project-city').value = project.city || '';
+  document.getElementById('edit-project-assembler-start').value = project.assembler_start_date || '';
+  document.getElementById('edit-project-electrician-start').value = project.electrician_start_date || '';
   
   // Popular dropdowns
   const storeSelect = document.getElementById('edit-project-store');
@@ -1687,6 +1721,9 @@ document.getElementById('edit-project-form').addEventListener('submit', async (e
   const deliveryForecast = document.getElementById('edit-project-delivery').value;
   const locationAddress = document.getElementById('edit-project-location').value;
   const gsiForecastDate = document.getElementById('edit-project-gsi-forecast').value;
+  const city = document.getElementById('edit-project-city').value;
+  const assemblerStartDate = document.getElementById('edit-project-assembler-start').value;
+  const electricianStartDate = document.getElementById('edit-project-electrician-start').value;
   
   try {
     // Criar integradora se selecionou "Criar novo"
@@ -1770,7 +1807,10 @@ document.getElementById('edit-project-form').addEventListener('submit', async (e
       startDate: startDate || null,
       deliveryForecast: deliveryForecast || null,
       locationAddress: locationAddress || null,
-      gsiForecastDate: gsiForecastDate || null
+      gsiForecastDate: gsiForecastDate || null,
+      city: city || null,
+      assemblerStartDate: assemblerStartDate || null,
+      electricianStartDate: electricianStartDate || null
     };
     
     const res = await api(`/api/projects/${projectId}`, {
@@ -2319,3 +2359,50 @@ function setupColumnResizers() {
 
 // Inicializar resize das colunas
 setupColumnResizers();
+
+// ==================== FUNÇÕES GOOGLE MAPS ====================
+
+// Abrir localização no Google Maps (modal de nova obra)
+window.openLocationInMaps = function() {
+  const locationInput = document.getElementById('project-location');
+  if (!locationInput) return;
+  
+  const address = locationInput.value.trim();
+  if (!address) {
+    alert('Digite um endereço primeiro');
+    return;
+  }
+  
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+  window.open(mapsUrl, '_blank');
+};
+
+// Abrir localização no Google Maps (modal de edição)
+window.openEditLocationInMaps = function() {
+  const locationInput = document.getElementById('edit-project-location');
+  if (!locationInput) return;
+  
+  const address = locationInput.value.trim();
+  if (!address) {
+    alert('Digite um endereço primeiro');
+    return;
+  }
+  
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+  window.open(mapsUrl, '_blank');
+};
+
+// Abrir localização no Google Maps (detalhes da obra)
+window.openDetailLocationInMaps = function() {
+  const locationInput = document.querySelector('#detail-location input');
+  if (!locationInput) return;
+  
+  const address = locationInput.value.trim();
+  if (!address) {
+    alert('Digite um endereço primeiro');
+    return;
+  }
+  
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+  window.open(mapsUrl, '_blank');
+};
