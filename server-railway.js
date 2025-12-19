@@ -249,6 +249,19 @@ app.get('/api/projects/state', authenticateToken, async (req, res) => {
       project.tasks = tasksByProject[project.id] || [];
     });
 
+    // DEBUG: Verificar se details_text está vindo do banco
+    if (projects.length > 0) {
+      const firstProject = projects[0];
+      console.log('🔍 DEBUG SERVER - Primeiro projeto:', {
+        id: firstProject.id,
+        name: firstProject.name,
+        hasDetailsText: !!firstProject.details_text,
+        detailsTextLength: firstProject.details_text ? firstProject.details_text.length : 0,
+        hasDetailsChecklist: !!firstProject.details_checklist,
+        allFields: Object.keys(firstProject).sort()
+      });
+    }
+
     // Buscar projeto atual se especificado
     let currentProject = null;
     if (currentProjectId) {
