@@ -571,7 +571,7 @@ io.on('connection', (socket) => {
 // ==================== INICIAR SERVIDOR ====================
 
 const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`📱 Acesse: http://localhost:${PORT}`);
   console.log(`💾 Banco: Railway PostgreSQL`);
