@@ -2370,7 +2370,9 @@ window.openLocationInMaps = function() {
   
   const address = locationInput.value.trim();
   if (!address) {
-    alert('Digite um endereço primeiro');
+    // Se não tem endereço, abrir Google Maps no Brasil
+    const mapsUrl = 'https://www.google.com/maps/@-15.7801,-47.9292,5z';
+    window.open(mapsUrl, '_blank');
     return;
   }
   
@@ -2385,7 +2387,9 @@ window.openEditLocationInMaps = function() {
   
   const address = locationInput.value.trim();
   if (!address) {
-    alert('Digite um endereço primeiro');
+    // Se não tem endereço, abrir Google Maps no Brasil
+    const mapsUrl = 'https://www.google.com/maps/@-15.7801,-47.9292,5z';
+    window.open(mapsUrl, '_blank');
     return;
   }
   
@@ -2400,7 +2404,9 @@ window.openDetailLocationInMaps = function() {
   
   const address = locationInput.value.trim();
   if (!address) {
-    alert('Digite um endereço primeiro');
+    // Se não tem endereço, abrir Google Maps no Brasil
+    const mapsUrl = 'https://www.google.com/maps/@-15.7801,-47.9292,5z';
+    window.open(mapsUrl, '_blank');
     return;
   }
   

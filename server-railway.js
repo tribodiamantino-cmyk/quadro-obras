@@ -462,6 +462,29 @@ app.get('/api/projects', authenticateToken, async (req, res) => {
       [req.user.organizationId]
     );
 
+    // Buscar todas as tarefas da organização
+    const allTasks = await db.many(
+      `SELECT t.* FROM tasks t
+       INNER JOIN projects p ON t.project_id = p.id
+       WHERE p.organization_id = $1
+       ORDER BY t.display_order ASC, t.created_at DESC`,
+      [req.user.organizationId]
+    );
+
+    // Organizar tarefas por projeto
+    const tasksByProject = {};
+    allTasks.forEach(task => {
+      if (!tasksByProject[task.project_id]) {
+        tasksByProject[task.project_id] = [];
+      }
+      tasksByProject[task.project_id].push(task);
+    });
+
+    // Adicionar tarefas aos projetos
+    projects.forEach(project => {
+      project.tasks = tasksByProject[project.id] || [];
+    });
+
     res.json(projects);
   } catch (error) {
     console.error('Erro ao buscar projetos:', error);

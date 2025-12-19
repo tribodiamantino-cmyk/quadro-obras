@@ -477,7 +477,7 @@
       </div>
       
       <div style="padding: 10px 15px; background: #1e293b; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-        <input type="text" id="map-search-input" placeholder="Buscar endereço..." 
+        <input type="text" id="map-search-input" placeholder="Buscar cidade ou região..." 
                style="flex: 1; min-width: 200px; padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #ecf0f1; font-size: 14px;" />
         <button type="button" onclick="searchAddress()" 
                 style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
@@ -489,12 +489,19 @@
         </button>
       </div>
       
+      <div style="padding: 8px 15px; background: #0f172a; color: #9ca3af; font-size: 12px; border-bottom: 1px solid #334155;">
+        💡 <strong>Dica:</strong> Para obras no interior sem endereço, busque a cidade e depois clique/arraste o pin para o local exato.
+      </div>
+      
       <div id="map-container" style="flex: 1; min-height: 300px;"></div>
       
       <div style="padding: 15px; background: #1e293b; border-top: 1px solid #334155;">
         <div style="margin-bottom: 10px;">
-          <strong style="color: #3b82f6;">📍 Endereço Selecionado:</strong>
-          <span id="selected-address" style="color: #ecf0f1; margin-left: 10px;">Clique no mapa para selecionar</span>
+          <strong style="color: #3b82f6;">📍 Local Selecionado:</strong>
+          <span id="selected-address" style="color: #ecf0f1; margin-left: 10px;">Clique no mapa ou busque uma cidade</span>
+        </div>
+        <div id="selected-coords" style="font-size: 11px; color: #6b7280; margin-bottom: 10px; display: none;">
+          Coordenadas: <span id="coords-display"></span>
         </div>
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
           <button type="button" onclick="closeMapModal()" 
@@ -578,13 +585,17 @@
       selectedLocation.lat = lat;
       selectedLocation.lng = lng;
       map.setView([lat, lng], 15);
+      
+      // Mostrar coordenadas
+      document.getElementById('selected-coords').style.display = 'block';
+      document.getElementById('coords-display').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
     }
 
     // Buscar endereço (geocoding)
     window.searchAddress = async function() {
       const query = document.getElementById('map-search-input').value.trim();
       if (!query) {
-        alert('Digite um endereço para buscar');
+        alert('Digite uma cidade ou região para buscar');
         return;
       }
       
@@ -600,7 +611,7 @@
           selectedLocation.address = result.display_name;
           document.getElementById('selected-address').textContent = result.display_name;
         } else {
-          alert('Endereço não encontrado. Tente ser mais específico.');
+          alert('Local não encontrado. Tente buscar pelo nome da cidade.');
         }
       } catch (error) {
         console.error('Erro ao buscar endereço:', error);
@@ -654,9 +665,11 @@
         return;
       }
       
-      // Preencher o campo de endereço
+      // Preencher o campo de endereço (ou coordenadas se não tiver endereço)
       if (targetInputId) {
-        document.getElementById(targetInputId).value = selectedLocation.address;
+        const addressValue = selectedLocation.address || 
+          `Coordenadas: ${selectedLocation.lat.toFixed(6)}, ${selectedLocation.lng.toFixed(6)}`;
+        document.getElementById(targetInputId).value = addressValue;
         
         // Preencher campos de lat/lng se existirem
         const latInput = document.getElementById(targetInputId + '-lat');
