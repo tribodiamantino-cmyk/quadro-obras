@@ -703,10 +703,10 @@ app.get('/api/calendar', async (req, res) => {
     // Transformar em eventos
     const events = [];
     const eventTypes = [
-      { field: 'start_date', type: 'start_date', label: 'Início da Obra', color: '#22c55e' },
-      { field: 'delivery_forecast', type: 'delivery_forecast', label: 'Previsão de Entrega', color: '#3b82f6' },
-      { field: 'gsi_forecast_date', type: 'gsi_forecast_date', label: 'Previsão GSI', color: '#f59e0b' },
-      { field: 'gsi_actual_date', type: 'gsi_actual_date', label: 'GSI Confirmado', color: '#10b981' }
+      { field: 'start_date', type: 'start_date', label: 'Início da Obra', color: '#22c55e', icon: '🚀' },
+      { field: 'delivery_forecast', type: 'delivery_forecast', label: 'Previsão de Entrega', color: '#3b82f6', icon: '📦' },
+      { field: 'gsi_forecast_date', type: 'gsi_forecast_date', label: 'Previsão GSI', color: '#f59e0b', icon: '📅' },
+      { field: 'gsi_actual_date', type: 'gsi_actual_date', label: 'GSI Confirmado', color: '#10b981', icon: '✅' }
     ];
 
     projects.forEach(project => {
