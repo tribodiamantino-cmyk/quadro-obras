@@ -966,6 +966,249 @@ app.get('/api/settings/work-statuses', authenticateToken, async (req, res) => {
   }
 });
 
+// ==================== USERS ====================
+
+// Listar usuários
+app.get('/api/users', authenticateToken, async (req, res) => {
+  try {
+    const users = await db.many(
+      `SELECT id, name, email, role, active, created_at, all_stores_access
+       FROM users 
+       WHERE organization_id = $1 
+       ORDER BY name`,
+      [req.user.organizationId]
+    );
+    
+    // Para cada usuário, buscar lojas associadas
+    for (const user of users) {
+      if (!user.all_stores_access) {
+        const userStores = await db.any(
+          `SELECT store_id FROM user_stores WHERE user_id = $1`,
+          [user.id]
+        );
+        user.store_ids = userStores.map(us => us.store_id);
+      } else {
+        user.store_ids = [];
+      }
+    }
+    
+    res.json(users);
+  } catch (error) {
+    console.error('Erro ao listar usuários:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Criar usuário
+app.post('/api/users', authenticateToken, async (req, res) => {
+  try {
+    const { name, email, password, role, all_stores_access, store_ids } = req.body;
+    
+    // Verificar se email já existe
+    const existing = await db.oneOrNone(
+      'SELECT id FROM users WHERE email = $1 AND organization_id = $2',
+      [email, req.user.organizationId]
+    );
+    
+    if (existing) {
+      return res.status(400).json({ message: 'Email já cadastrado' });
+    }
+    
+    // Hash da senha
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Inserir usuário
+    const user = await db.one(
+      `INSERT INTO users (name, email, password, role, organization_id, all_stores_access, active) 
+       VALUES ($1, $2, $3, $4, $5, $6, true) 
+       RETURNING id, name, email, role, active, all_stores_access`,
+      [name, email, hashedPassword, role, req.user.organizationId, all_stores_access || false]
+    );
+    
+    // Se não tem acesso a todas, inserir lojas específicas
+    if (!all_stores_access && store_ids && store_ids.length > 0) {
+      const values = store_ids.map(storeId => `(${user.id}, ${storeId})`).join(',');
+      await db.none(`INSERT INTO user_stores (user_id, store_id) VALUES ${values}`);
+    }
+    
+    res.json(user);
+  } catch (error) {
+    console.error('Erro ao criar usuário:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Atualizar usuário
+app.put('/api/users/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, role, active, all_stores_access, store_ids } = req.body;
+    
+    // Verificar se usuário pertence à mesma organização
+    const user = await db.oneOrNone(
+      'SELECT * FROM users WHERE id = $1 AND organization_id = $2',
+      [id, req.user.organizationId]
+    );
+    
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+    
+    // Montar query de update
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+    
+    if (name !== undefined) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(name);
+    }
+    if (email !== undefined) {
+      updates.push(`email = $${paramIndex++}`);
+      values.push(email);
+    }
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updates.push(`password = $${paramIndex++}`);
+      values.push(hashedPassword);
+    }
+    if (role !== undefined) {
+      updates.push(`role = $${paramIndex++}`);
+      values.push(role);
+    }
+    if (active !== undefined) {
+      updates.push(`active = $${paramIndex++}`);
+      values.push(active);
+    }
+    if (all_stores_access !== undefined) {
+      updates.push(`all_stores_access = $${paramIndex++}`);
+      values.push(all_stores_access);
+    }
+    
+    values.push(id);
+    
+    if (updates.length > 0) {
+      await db.none(
+        `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
+        values
+      );
+    }
+    
+    // Atualizar lojas do usuário
+    if (all_stores_access !== undefined) {
+      if (all_stores_access) {
+        // Se tem acesso a todas, limpar lojas específicas
+        await db.none('DELETE FROM user_stores WHERE user_id = $1', [id]);
+      } else if (store_ids !== undefined) {
+        // Atualizar lojas específicas
+        await db.none('DELETE FROM user_stores WHERE user_id = $1', [id]);
+        if (store_ids.length > 0) {
+          const values = store_ids.map(storeId => `(${id}, ${storeId})`).join(',');
+          await db.none(`INSERT INTO user_stores (user_id, store_id) VALUES ${values}`);
+        }
+      }
+    }
+    
+    const updatedUser = await db.one(
+      'SELECT id, name, email, role, active, all_stores_access FROM users WHERE id = $1',
+      [id]
+    );
+    
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Erro ao atualizar usuário:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Deletar usuário
+app.delete('/api/users/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Verificar se usuário pertence à mesma organização
+    const user = await db.oneOrNone(
+      'SELECT * FROM users WHERE id = $1 AND organization_id = $2',
+      [id, req.user.organizationId]
+    );
+    
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+    
+    // Não permitir deletar o próprio usuário
+    if (parseInt(id) === req.user.id) {
+      return res.status(400).json({ message: 'Você não pode deletar seu próprio usuário' });
+    }
+    
+    await db.none('DELETE FROM users WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao deletar usuário:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ==================== AUDIT LOGS ====================
+
+app.get('/api/audit-logs', authenticateToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 50, userId, action, entityType } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let whereConditions = ['l.organization_id = $1'];
+    let params = [req.user.organizationId];
+    let paramIndex = 2;
+    
+    if (userId) {
+      whereConditions.push(`l.user_id = $${paramIndex++}`);
+      params.push(userId);
+    }
+    if (action) {
+      whereConditions.push(`l.action = $${paramIndex++}`);
+      params.push(action);
+    }
+    if (entityType) {
+      whereConditions.push(`l.entity_type = $${paramIndex++}`);
+      params.push(entityType);
+    }
+    
+    const whereClause = whereConditions.join(' AND ');
+    
+    // Buscar logs
+    const logs = await db.any(
+      `SELECT l.*, u.name as user_name, u.email as user_email
+       FROM audit_logs l
+       LEFT JOIN users u ON l.user_id = u.id
+       WHERE ${whereClause}
+       ORDER BY l.created_at DESC
+       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+      [...params, parseInt(limit), offset]
+    );
+    
+    // Contar total
+    const { count } = await db.one(
+      `SELECT COUNT(*) as count FROM audit_logs l WHERE ${whereClause}`,
+      params
+    );
+    
+    const totalPages = Math.ceil(count / limit);
+    
+    res.json({
+      logs,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: parseInt(count),
+        totalPages
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar logs:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // ==================== STATE (usado pelo app.js) ====================
 
 app.get('/api/state', authenticateToken, async (req, res) => {
