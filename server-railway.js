@@ -479,6 +479,60 @@ app.get('/api/settings/work-statuses', authenticateToken, async (req, res) => {
   }
 });
 
+// ==================== STATE (usado pelo app.js) ====================
+
+app.get('/api/state', async (req, res) => {
+  try {
+    // Retorna todos os projetos com suas tarefas e dados relacionados
+    const projects = await db.many(
+      `SELECT p.*,
+              s.name as store_name,
+              ws.name as work_status_name, ws.color as work_status_color,
+              i.name as integrator_name,
+              a.name as assembler_name,
+              e.name as electrician_name
+       FROM projects p
+       LEFT JOIN stores s ON p.store_id = s.id
+       LEFT JOIN work_statuses ws ON p.work_status_id = ws.id
+       LEFT JOIN integrators i ON p.integrator_id = i.id
+       LEFT JOIN assemblers a ON p.assembler_id = a.id
+       LEFT JOIN electricians e ON p.electrician_id = e.id
+       WHERE p.archived = false
+       ORDER BY p.display_order, p.created_at DESC`
+    );
+
+    // Buscar tarefas para cada projeto
+    for (const project of projects) {
+      const tasks = await db.many(
+        `SELECT * FROM tasks 
+         WHERE project_id = $1 
+         ORDER BY order_position, created_at`,
+        [project.id]
+      );
+      project.tasks = tasks;
+    }
+
+    const stores = await db.many('SELECT * FROM stores WHERE active = true ORDER BY name');
+    const integrators = await db.many('SELECT * FROM integrators ORDER BY name');
+    const assemblers = await db.many('SELECT * FROM assemblers ORDER BY name');
+    const electricians = await db.many('SELECT * FROM electricians ORDER BY name');
+    const workStatuses = await db.many('SELECT * FROM work_statuses ORDER BY created_at');
+
+    res.json({ 
+      projects, 
+      stores, 
+      integrators, 
+      assemblers, 
+      electricians, 
+      workStatuses,
+      currentProjectId: null 
+    });
+  } catch (error) {
+    console.error('Erro ao buscar state:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // ==================== DASHBOARD PÚBLICO ====================
 
 app.get('/api/dashboard', async (req, res) => {
