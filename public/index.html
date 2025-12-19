@@ -6,6 +6,8 @@
   <title>Quadro de Obras — Multiusuário</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
   <link rel="stylesheet" href="style.css" />
+  <!-- Leaflet CSS para o mapa -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script>
     // Verificar autenticação ANTES de carregar a página
     (function() {
@@ -118,7 +120,7 @@
             <span id="detail-assembler">-</span>
           </div>
           <div class="info-field">
-            <label>Data Início Montagem:</label>
+            <label>Previsão Início Montagem:</label>
             <span id="detail-assembler-start">-</span>
           </div>
           <div class="info-field">
@@ -126,11 +128,11 @@
             <span id="detail-electrician">-</span>
           </div>
           <div class="info-field">
-            <label>Data Início Elétrica:</label>
+            <label>Previsão Início Elétrica:</label>
             <span id="detail-electrician-start">-</span>
           </div>
           <div class="info-field">
-            <label>Data Início:</label>
+            <label>Previsão Início:</label>
             <span id="detail-start-date">-</span>
           </div>
           <div class="info-field">
@@ -280,7 +282,7 @@
           </div>
           
           <div class="form-group">
-            <label for="project-assembler-start-date">Data Início Montagem</label>
+            <label for="project-assembler-start-date">Previsão Início Montagem</label>
             <input type="date" id="project-assembler-start-date" />
           </div>
         </div>
@@ -295,14 +297,14 @@
           </div>
           
           <div class="form-group">
-            <label for="project-electrician-start-date">Data Início Elétrica</label>
+            <label for="project-electrician-start-date">Previsão Início Elétrica</label>
             <input type="date" id="project-electrician-start-date" />
           </div>
         </div>
         
         <div class="form-row">
           <div class="form-group">
-            <label for="project-start-date">Data Início</label>
+            <label for="project-start-date">Previsão Início</label>
             <input type="date" id="project-start-date" />
           </div>
           
@@ -317,10 +319,15 @@
             <label for="project-location">Localização (Endereço)</label>
             <div style="display: flex; gap: 8px;">
               <input type="text" id="project-location" placeholder="Endereço da obra" style="flex: 1;" />
+              <button type="button" onclick="openMapSelector('project-location')" style="padding: 8px 16px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 14px;" title="Selecionar no Mapa">
+                🗺️ Mapa
+              </button>
               <button type="button" onclick="openLocationInMaps()" style="padding: 8px 16px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 14px;" title="Abrir no Google Maps">
                 📍 Maps
               </button>
             </div>
+            <input type="hidden" id="project-location-lat" />
+            <input type="hidden" id="project-location-lng" />
           </div>
         </div>
         
@@ -397,7 +404,7 @@
           </div>
           
           <div class="form-group">
-            <label for="edit-project-assembler-start-date">Data Início Montagem</label>
+            <label for="edit-project-assembler-start-date">Previsão Início Montagem</label>
             <input type="date" id="edit-project-assembler-start-date" />
           </div>
         </div>
@@ -412,14 +419,14 @@
           </div>
           
           <div class="form-group">
-            <label for="edit-project-electrician-start-date">Data Início Elétrica</label>
+            <label for="edit-project-electrician-start-date">Previsão Início Elétrica</label>
             <input type="date" id="edit-project-electrician-start-date" />
           </div>
         </div>
         
         <div class="form-row">
           <div class="form-group">
-            <label for="edit-project-start-date">Data Início</label>
+            <label for="edit-project-start-date">Previsão Início</label>
             <input type="date" id="edit-project-start-date" />
           </div>
           
@@ -434,10 +441,15 @@
             <label for="edit-project-location">Localização (Endereço)</label>
             <div style="display: flex; gap: 8px;">
               <input type="text" id="edit-project-location" placeholder="Endereço da obra" style="flex: 1;" />
+              <button type="button" onclick="openMapSelector('edit-project-location')" style="padding: 8px 16px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 14px;" title="Selecionar no Mapa">
+                🗺️ Mapa
+              </button>
               <button type="button" onclick="openEditLocationInMaps()" style="padding: 8px 16px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; font-size: 14px;" title="Abrir no Google Maps">
                 📍 Maps
               </button>
             </div>
+            <input type="hidden" id="edit-project-location-lat" />
+            <input type="hidden" id="edit-project-location-lng" />
           </div>
         </div>
         
@@ -455,6 +467,228 @@
       </form>
     </div>
   </div>
+
+  <!-- Modal de Seleção de Localização no Mapa -->
+  <div id="map-modal" class="modal">
+    <div class="modal-content" style="width: 90%; max-width: 900px; height: 80vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <h2>🗺️ Selecionar Localização</h2>
+        <button class="modal-close" onclick="closeMapModal()">&times;</button>
+      </div>
+      
+      <div style="padding: 10px 15px; background: #1e293b; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <input type="text" id="map-search-input" placeholder="Buscar endereço..." 
+               style="flex: 1; min-width: 200px; padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #ecf0f1; font-size: 14px;" />
+        <button type="button" onclick="searchAddress()" 
+                style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+          🔍 Buscar
+        </button>
+        <button type="button" onclick="getCurrentLocation()" 
+                style="padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+          📍 Minha Localização
+        </button>
+      </div>
+      
+      <div id="map-container" style="flex: 1; min-height: 300px;"></div>
+      
+      <div style="padding: 15px; background: #1e293b; border-top: 1px solid #334155;">
+        <div style="margin-bottom: 10px;">
+          <strong style="color: #3b82f6;">📍 Endereço Selecionado:</strong>
+          <span id="selected-address" style="color: #ecf0f1; margin-left: 10px;">Clique no mapa para selecionar</span>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" onclick="closeMapModal()" 
+                  style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
+            Cancelar
+          </button>
+          <button type="button" onclick="confirmMapLocation()" 
+                  style="padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+            ✓ Confirmar Localização
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <!-- Script do Mapa -->
+  <script>
+    // Variáveis globais do mapa
+    let map = null;
+    let marker = null;
+    let selectedLocation = { lat: null, lng: null, address: '' };
+    let targetInputId = null;
+
+    // Abrir modal do mapa
+    window.openMapSelector = function(inputId) {
+      targetInputId = inputId;
+      const modal = document.getElementById('map-modal');
+      modal.classList.add('active');
+      
+      // Inicializar mapa se ainda não existir
+      setTimeout(() => {
+        if (!map) {
+          initMap();
+        } else {
+          map.invalidateSize();
+        }
+        
+        // Se já tem endereço, tentar localizar
+        const currentAddress = document.getElementById(inputId)?.value;
+        if (currentAddress) {
+          document.getElementById('map-search-input').value = currentAddress;
+          searchAddress();
+        }
+      }, 100);
+    };
+
+    // Inicializar mapa Leaflet
+    function initMap() {
+      // Centro padrão: Brasil
+      map = L.map('map-container').setView([-15.7801, -47.9292], 4);
+      
+      // Camada do OpenStreetMap
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      
+      // Clique no mapa para adicionar/mover marcador
+      map.on('click', function(e) {
+        placeMarker(e.latlng.lat, e.latlng.lng);
+        reverseGeocode(e.latlng.lat, e.latlng.lng);
+      });
+    }
+
+    // Colocar marcador no mapa
+    function placeMarker(lat, lng) {
+      if (marker) {
+        marker.setLatLng([lat, lng]);
+      } else {
+        marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+        
+        // Quando arrastar o marcador
+        marker.on('dragend', function(e) {
+          const pos = e.target.getLatLng();
+          reverseGeocode(pos.lat, pos.lng);
+        });
+      }
+      
+      selectedLocation.lat = lat;
+      selectedLocation.lng = lng;
+      map.setView([lat, lng], 15);
+    }
+
+    // Buscar endereço (geocoding)
+    window.searchAddress = async function() {
+      const query = document.getElementById('map-search-input').value.trim();
+      if (!query) {
+        alert('Digite um endereço para buscar');
+        return;
+      }
+      
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`
+        );
+        const results = await response.json();
+        
+        if (results && results.length > 0) {
+          const result = results[0];
+          placeMarker(parseFloat(result.lat), parseFloat(result.lon));
+          selectedLocation.address = result.display_name;
+          document.getElementById('selected-address').textContent = result.display_name;
+        } else {
+          alert('Endereço não encontrado. Tente ser mais específico.');
+        }
+      } catch (error) {
+        console.error('Erro ao buscar endereço:', error);
+        alert('Erro ao buscar endereço');
+      }
+    };
+
+    // Geocodificação reversa (coordenadas -> endereço)
+    async function reverseGeocode(lat, lng) {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+        );
+        const result = await response.json();
+        
+        if (result && result.display_name) {
+          selectedLocation.address = result.display_name;
+          document.getElementById('selected-address').textContent = result.display_name;
+        }
+      } catch (error) {
+        console.error('Erro na geocodificação reversa:', error);
+        selectedLocation.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        document.getElementById('selected-address').textContent = selectedLocation.address;
+      }
+    }
+
+    // Obter localização atual
+    window.getCurrentLocation = function() {
+      if (!navigator.geolocation) {
+        alert('Geolocalização não suportada pelo navegador');
+        return;
+      }
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          placeMarker(lat, lng);
+          reverseGeocode(lat, lng);
+        },
+        (error) => {
+          alert('Não foi possível obter sua localização: ' + error.message);
+        }
+      );
+    };
+
+    // Confirmar localização selecionada
+    window.confirmMapLocation = function() {
+      if (!selectedLocation.lat || !selectedLocation.lng) {
+        alert('Selecione uma localização no mapa primeiro');
+        return;
+      }
+      
+      // Preencher o campo de endereço
+      if (targetInputId) {
+        document.getElementById(targetInputId).value = selectedLocation.address;
+        
+        // Preencher campos de lat/lng se existirem
+        const latInput = document.getElementById(targetInputId + '-lat');
+        const lngInput = document.getElementById(targetInputId + '-lng');
+        if (latInput) latInput.value = selectedLocation.lat;
+        if (lngInput) lngInput.value = selectedLocation.lng;
+      }
+      
+      closeMapModal();
+    };
+
+    // Fechar modal do mapa
+    window.closeMapModal = function() {
+      document.getElementById('map-modal').classList.remove('active');
+      selectedLocation = { lat: null, lng: null, address: '' };
+      document.getElementById('selected-address').textContent = 'Clique no mapa para selecionar';
+      document.getElementById('map-search-input').value = '';
+    };
+
+    // Permitir busca com Enter
+    document.addEventListener('DOMContentLoaded', function() {
+      const searchInput = document.getElementById('map-search-input');
+      if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            searchAddress();
+          }
+        });
+      }
+    });
+  </script>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="auth.js"></script>
