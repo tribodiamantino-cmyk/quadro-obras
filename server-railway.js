@@ -43,12 +43,12 @@ async function runMigrations() {
       END $$;
     `);
     
-    // Criar tabela user_stores se não existir (user_id é UUID para match com users.id)
+    // Criar tabela user_stores se não existir (ambos user_id e store_id são UUID)
     await db.query(`
       CREATE TABLE IF NOT EXISTS user_stores (
         id SERIAL PRIMARY KEY,
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+        store_id UUID NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id, store_id)
       )
