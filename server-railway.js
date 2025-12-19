@@ -66,6 +66,7 @@ async function runMigrations() {
     await db.query(`
       CREATE TABLE IF NOT EXISTS audit_logs (
         id SERIAL PRIMARY KEY,
+        organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
         user_id UUID REFERENCES users(id) ON DELETE SET NULL,
         action VARCHAR(50) NOT NULL,
         entity_type VARCHAR(50) NOT NULL,
@@ -84,6 +85,9 @@ async function runMigrations() {
     `);
     await db.query(`
       CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at)
+    `);
+    await db.query(`
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_organization_id ON audit_logs(organization_id)
     `);
     
     console.log('✅ Migrações concluídas com sucesso!');
@@ -1257,15 +1261,16 @@ app.get('/api/audit-logs', authenticateToken, async (req, res) => {
     );
     
     // Contar total
-    const { count } = await db.one(
+    const countResult = await db.single(
       `SELECT COUNT(*) as count FROM audit_logs l WHERE ${whereClause}`,
       params
     );
+    const count = countResult?.count || 0;
     
-    const totalPages = Math.ceil(count / limit);
+    const totalPages = Math.ceil(count / limit) || 1;
     
     res.json({
-      logs,
+      logs: logs || [],
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
