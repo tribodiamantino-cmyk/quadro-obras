@@ -1091,7 +1091,7 @@ document.getElementById('project-form').addEventListener('submit', async (e) => 
 
 // ==================== FIM MODAL ====================
 
-// Adicionar tarefa
+// Adicionar tarefa - OTIMIZADO (aparece instantaneamente)
 if (btnAddCriado && inputCriado) {
   const addTask = async () => {
     const title = inputCriado.value.trim();
@@ -1105,32 +1105,108 @@ if (btnAddCriado && inputCriado) {
       return;
     }
     
-    try {
-      // Marcar atualização local
+    // ID temporário para update otimista
+    const tempId = 'temp_' + Date.now();
+    
+    // Criar objeto da tarefa temporária
+    const tempTask = {
+      id: tempId,
+      title: title,
+      status: 'Criado',
+      project_id: currentProjectId,
+      position: state.tasks.filter(t => t.status === 'Criado').length
+    };
+    
+    // UPDATE OTIMISTA: Adiciona à UI IMEDIATAMENTE
+    const updateUI = () => {
+      // Adicionar ao state
+      state.tasks.push(tempTask);
+      
+      // Adicionar ao DOM diretamente (sem re-render completo)
+      const colCriado = document.getElementById('col-criado');
+      if (colCriado) {
+        const taskHTML = `
+          <div class="task" draggable="true" data-id="${tempId}" data-status="Criado" style="opacity: 0.7; border-left: 3px solid #f39c12;">
+            <div class="task-title">${title}</div>
+            <div class="task-actions">
+              <button class="btn-task-pending" onclick="createPending('${tempId}')" title="Criar Pendência" disabled>P</button>
+              <button class="btn-task-nav btn-next" onclick="moveTask('${tempId}', 'next')" title="Avançar" disabled>▶</button>
+              <button class="btn-task-delete" onclick="deleteTask('${tempId}')" title="Excluir" disabled>×</button>
+            </div>
+          </div>
+        `;
+        colCriado.insertAdjacentHTML('beforeend', taskHTML);
+      }
+      
+      // Limpar input imediatamente
+      inputCriado.value = '';
+      inputCriado.focus();
+    };
+    
+    // ROLLBACK: se falhar, remove a task temporária
+    const rollback = () => {
+      const index = state.tasks.findIndex(t => t.id === tempId);
+      if (index >= 0) state.tasks.splice(index, 1);
+      const tempEl = document.querySelector(`.task[data-id="${tempId}"]`);
+      if (tempEl) tempEl.remove();
+    };
+    
+    // API call em background
+    const apiCall = async () => {
       lastLocalUpdate = Date.now();
       
       const res = await api('/api/tasks', {
         method: 'POST',
         body: JSON.stringify({
           title,
-          status: 'Criado', // Status correto em português
+          status: 'Criado',
           projectId: currentProjectId
         })
       });
       
-      if (res.ok) {
-        inputCriado.value = '';
-        showToast('✅ Tarefa criada!', 'success');
-        await loadState();
-        // Focar de volta no input para facilitar adicionar mais tarefas
-        setTimeout(() => inputCriado.focus(), 100);
-      } else {
+      if (!res.ok) {
         const error = await res.json();
-        showToast(error.message || 'Erro ao criar tarefa', 'error');
+        throw new Error(error.message || 'Erro ao criar tarefa');
       }
-    } catch (error) {
-      console.error('Erro ao criar tarefa:', error);
-      showToast('Erro ao criar tarefa', 'error');
+      
+      const newTask = await res.json();
+      
+      // Substituir task temporária pela real
+      const index = state.tasks.findIndex(t => t.id === tempId);
+      if (index >= 0) {
+        state.tasks[index] = newTask;
+      }
+      
+      // Atualizar ID no DOM
+      const tempEl = document.querySelector(`.task[data-id="${tempId}"]`);
+      if (tempEl) {
+        tempEl.dataset.id = newTask.id;
+        tempEl.style.opacity = '1';
+        tempEl.style.borderLeft = '';
+        
+        // Habilitar botões
+        tempEl.querySelectorAll('button').forEach(btn => {
+          btn.disabled = false;
+          btn.onclick = btn.onclick?.toString().replace(tempId, newTask.id);
+        });
+        
+        // Re-criar onclick com ID correto
+        tempEl.innerHTML = `
+          <div class="task-title">${newTask.title}</div>
+          <div class="task-actions">
+            <button class="btn-task-pending" onclick="createPending('${newTask.id}')" title="Criar Pendência">P</button>
+            <button class="btn-task-nav btn-next" onclick="moveTask('${newTask.id}', 'next')" title="Avançar">▶</button>
+            <button class="btn-task-delete" onclick="deleteTask('${newTask.id}')" title="Excluir">×</button>
+          </div>
+        `;
+      }
+    };
+    
+    // Executar update otimista
+    const success = await optimisticUpdate(updateUI, rollback, apiCall);
+    
+    if (success) {
+      showToast('✅ Tarefa criada!', 'success');
     }
   };
   
@@ -1420,33 +1496,76 @@ socket.on('tasksReordered', () => {
   }
 });
 
-// Salvar detalhes do projeto - OTIMIZADO COM DEBOUNCE
-if (projectDetails) {
-  const saveDetails = debounce(async () => {
-    if (!currentProjectId) return;
-    
-    try {
-      const res = await api(`/api/projects/${currentProjectId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ 
-          details_text: projectDetails.value 
-        })
-      });
-      
-      if (res.ok) {
-        // Feedback visual discreto
-        projectDetails.style.borderColor = '#10b981';
-        setTimeout(() => {
-          projectDetails.style.borderColor = '';
-        }, 500);
-      }
-    } catch (error) {
-      console.error('Erro ao salvar detalhes:', error);
-      showToast('Erro ao salvar observações', 'error');
-    }
-  }, 800); // Aguarda 800ms de pausa antes de salvar
+// Salvar detalhes do projeto - BOTÃO MANUAL
+window.saveProjectDetails = async function() {
+  if (!currentProjectId) {
+    showToast('Nenhuma obra selecionada', 'error');
+    return;
+  }
   
-  projectDetails.addEventListener('input', saveDetails);
+  const saveBtn = document.getElementById('btnSaveDetails');
+  const saveStatus = document.getElementById('saveStatus');
+  
+  try {
+    // Feedback visual - salvando
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '⏳ Salvando...';
+    }
+    if (saveStatus) saveStatus.textContent = '';
+    
+    const res = await api(`/api/projects/${currentProjectId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ 
+        details_text: projectDetails.value 
+      })
+    });
+    
+    if (res.ok) {
+      // Atualizar cache local
+      const project = state.allProjects.find(p => p.id === currentProjectId);
+      if (project) project.details_text = projectDetails.value;
+      
+      // Feedback visual - sucesso
+      if (saveBtn) {
+        saveBtn.innerHTML = '✅ Salvo!';
+        saveBtn.style.background = '#10b981';
+      }
+      if (saveStatus) saveStatus.textContent = 'Alterações salvas com sucesso!';
+      
+      setTimeout(() => {
+        if (saveBtn) {
+          saveBtn.innerHTML = '💾 Salvar Alterações';
+          saveBtn.disabled = false;
+        }
+        if (saveStatus) saveStatus.textContent = '';
+      }, 2000);
+      
+      showToast('Observações salvas!', 'success');
+    } else {
+      throw new Error('Erro ao salvar');
+    }
+  } catch (error) {
+    console.error('Erro ao salvar detalhes:', error);
+    if (saveBtn) {
+      saveBtn.innerHTML = '❌ Erro!';
+      saveBtn.style.background = '#ef4444';
+      setTimeout(() => {
+        saveBtn.innerHTML = '💾 Salvar Alterações';
+        saveBtn.style.background = '#10b981';
+        saveBtn.disabled = false;
+      }, 2000);
+    }
+    showToast('Erro ao salvar observações', 'error');
+  }
+};
+
+// Detectar mudanças não salvas (opcional - feedback visual)
+if (projectDetails) {
+  projectDetails.addEventListener('input', () => {
+    const saveStatus = document.getElementById('saveStatus');
+    if (saveStatus) saveStatus.textContent = '● Alterações não salvas';
+  });
 }
 
 // Inicializar

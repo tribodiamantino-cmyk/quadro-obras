@@ -141,6 +141,13 @@
         <!-- Observações (Editável) -->
         <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #95a5a6; font-size: 11px;">Observações:</label>
         <textarea id="projectDetails" placeholder="Adicione observações sobre a obra..."></textarea>
+        <div style="margin-top: 10px; display: flex; gap: 8px; align-items: center;">
+          <button id="btnSaveDetails" onclick="saveProjectDetails()" 
+            style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+            💾 Salvar Alterações
+          </button>
+          <span id="saveStatus" style="font-size: 11px; color: #94a3b8;"></span>
+        </div>
       </div>
 
       <div class="col" data-status="Criado">
