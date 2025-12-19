@@ -6,6 +6,7 @@ let allEvents = [];
 let filteredEvents = [];
 let stores = [];
 let integrators = [];
+let allIntegrators = []; // Mantém lista completa para filtro cascata
 let workStatuses = [];
 let eventTypes = [];
 let activeEventTypes = ['start_date', 'delivery_forecast', 'gsi_forecast_date', 'gsi_actual_date'];
@@ -66,6 +67,7 @@ async function loadCalendarData() {
     allEvents = data.events || [];
     stores = data.stores || [];
     integrators = data.integrators || [];
+    allIntegrators = [...integrators]; // Cópia para filtro cascata
     workStatuses = data.workStatuses || [];
     eventTypes = data.eventTypes || [];
     
@@ -88,13 +90,8 @@ function populateFilters() {
     storeFilter.innerHTML = `<option value="all">Todas as lojas</option>${options}`;
   }
   
-  // Integradoras
-  if (integratorFilter && integrators.length > 0) {
-    const options = integrators.map(i => 
-      `<option value="${i.id}">${i.name}</option>`
-    ).join('');
-    integratorFilter.innerHTML = `<option value="all">Todas as integradoras</option>${options}`;
-  }
+  // Integradoras (populado inicialmente com todas)
+  updateIntegratorsFilter();
   
   // Status da obra
   if (statusFilter && workStatuses.length > 0) {
@@ -102,6 +99,48 @@ function populateFilters() {
       `<option value="${s.id}">${s.name}</option>`
     ).join('');
     statusFilter.innerHTML = `<option value="all">Todos os status</option>${options}`;
+  }
+}
+
+// Atualizar filtro de integradoras baseado na loja selecionada (cascata)
+function updateIntegratorsFilter() {
+  if (!integratorFilter) return;
+  
+  let availableIntegrators = allIntegrators;
+  
+  // Se uma loja específica está selecionada, filtrar integradoras
+  if (selectedStore !== 'all') {
+    // Pegar integradoras únicas que têm obras nesta loja
+    const integratorIds = new Set();
+    allEvents.forEach(event => {
+      if (event.project.store?.id === selectedStore && event.project.integrator?.id) {
+        integratorIds.add(event.project.integrator.id);
+      }
+    });
+    
+    // Filtrar lista de integradoras
+    availableIntegrators = allIntegrators.filter(i => integratorIds.has(i.id));
+  }
+  
+  // Atualizar dropdown
+  if (availableIntegrators.length > 0) {
+    const options = availableIntegrators.map(i => 
+      `<option value="${i.id}">${i.name}</option>`
+    ).join('');
+    integratorFilter.innerHTML = `<option value="all">Todas as integradoras</option>${options}`;
+  } else {
+    integratorFilter.innerHTML = `<option value="all">Nenhuma integradora disponível</option>`;
+  }
+  
+  // Resetar seleção se a integradora atual não está mais disponível
+  const currentIntegratorExists = selectedIntegrator === 'all' || 
+    availableIntegrators.some(i => i.id === selectedIntegrator);
+  
+  if (!currentIntegratorExists) {
+    selectedIntegrator = 'all';
+    integratorFilter.value = 'all';
+  } else {
+    integratorFilter.value = selectedIntegrator;
   }
 }
 
@@ -428,6 +467,7 @@ function setupEventListeners() {
   // Filtros
   storeFilter.addEventListener('change', () => {
     selectedStore = storeFilter.value;
+    updateIntegratorsFilter(); // Atualizar integradoras em cascata
     applyFilters();
     renderCalendar();
     eventsList.style.display = 'none';

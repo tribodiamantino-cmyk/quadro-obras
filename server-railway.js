@@ -1163,6 +1163,37 @@ app.get('/api/calendar', async (req, res) => {
   }
 });
 
+// ==================== MIGRAÇÃO USER STORES ====================
+app.post('/api/admin/migrate-user-stores', async (req, res) => {
+  try {
+    // Criar tabela user_stores
+    await db.none(`
+      CREATE TABLE IF NOT EXISTS user_stores (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        store_id INTEGER NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, store_id)
+      )
+    `);
+    
+    // Criar índices
+    await db.none(`CREATE INDEX IF NOT EXISTS idx_user_stores_user_id ON user_stores(user_id)`);
+    await db.none(`CREATE INDEX IF NOT EXISTS idx_user_stores_store_id ON user_stores(store_id)`);
+    
+    // Adicionar coluna all_stores_access
+    await db.none(`ALTER TABLE users ADD COLUMN IF NOT EXISTS all_stores_access BOOLEAN DEFAULT false`);
+    
+    // Atualizar usuários existentes
+    await db.none(`UPDATE users SET all_stores_access = true WHERE all_stores_access IS NULL`);
+    
+    res.json({ success: true, message: 'Migração executada com sucesso!' });
+  } catch (error) {
+    console.error('Erro na migração:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // ==================== SOCKET.IO ====================
 
 io.on('connection', (socket) => {
