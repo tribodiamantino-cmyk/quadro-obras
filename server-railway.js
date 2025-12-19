@@ -209,7 +209,14 @@ app.get('/api/projects/state', authenticateToken, async (req, res) => {
     
     // Buscar todos os projetos
     const projects = await db.many(
-      `SELECT p.*,
+      `SELECT p.id, p.name, p.details_checklist, p.details_text, p.observations, 
+              p.is_current, p.archived, p.category, p.client_name,
+              p.integrator_id, p.assembler_id, p.electrician_id,
+              p.start_date, p.delivery_forecast, 
+              p.gsi_forecast_date, p.gsi_actual_date, p.gsi_delivery_confirmed_at,
+              p.location_lat, p.location_lng, p.location_address,
+              p.organization_id, p.created_at, p.updated_at,
+              p.store_id, p.work_status_id, p.priority, p.display_order,
               s.name as store_name, s.code as store_code, s.color as store_color,
               ws.name as work_status_name, ws.color as work_status_color,
               i.name as integrator_name,
