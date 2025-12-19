@@ -42,10 +42,34 @@ const db = {
     return result.rows[0] || null;
   },
   
+  // Alias para compatibilidade com pg-promise
+  async one(text, params) {
+    const result = await pool.query(text, params);
+    if (result.rows.length === 0) throw new Error('No data returned');
+    return result.rows[0];
+  },
+  
+  async oneOrNone(text, params) {
+    const result = await pool.query(text, params);
+    return result.rows[0] || null;
+  },
+  
   // Helper para múltiplas rows
   async many(text, params) {
     const result = await pool.query(text, params);
     return result.rows;
+  },
+  
+  // Alias para compatibilidade (any = many mas pode retornar vazio)
+  async any(text, params) {
+    const result = await pool.query(text, params);
+    return result.rows;
+  },
+  
+  // Para queries sem retorno (INSERT, UPDATE, DELETE sem RETURNING)
+  async none(text, params) {
+    await pool.query(text, params);
+    return null;
   },
   
   // Helper para insert retornando o registro
