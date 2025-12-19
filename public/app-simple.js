@@ -2053,11 +2053,11 @@ function renderGsiFields(project) {
   
   if (!forecastEl || !actualEl || !btnValidate) return;
   
-  // Campo de data prevista com máscara
+  // Campo de data prevista com máscara (usando formatDateForInput)
   forecastEl.innerHTML = `
     <input 
       type="date" 
-      value="${project.gsi_forecast_date || ''}" 
+      value="${formatDateForInput(project.gsi_forecast_date)}" 
       onchange="updateGsiForecastDate('${project.id}', this.value)"
       style="width: 100%; background: #1e293b; border: 1px solid #34495e; color: #ecf0f1; padding: 4px; border-radius: 4px; font-size: 10px;"
       placeholder="dd/mm/aaaa"
@@ -2078,24 +2078,48 @@ function renderGsiFields(project) {
   }
 }
 
-// Atualizar data prevista GSI
+// Atualizar data prevista GSI - OTIMIZADO
 window.updateGsiForecastDate = async function(projectId, date) {
   try {
+    // UPDATE OTIMISTA: Atualizar cache local primeiro
+    const project = state.allProjects?.find(p => p.id === projectId);
+    const currentProject = state.currentProject;
+    const oldValue = project?.gsi_forecast_date;
+    
+    if (project) {
+      project.gsi_forecast_date = date || null;
+    }
+    if (currentProject && currentProject.id === projectId) {
+      currentProject.gsi_forecast_date = date || null;
+      // Atualizar botão de validar
+      const btnValidate = document.getElementById('btn-validate-gsi');
+      if (btnValidate) {
+        btnValidate.style.display = date ? 'block' : 'none';
+      }
+    }
+    
+    lastLocalUpdate = Date.now();
+    
     const res = await api(`/api/projects/${projectId}`, {
       method: 'PATCH',
       body: JSON.stringify({ gsi_forecast_date: date || null })
     });
     
     if (res.ok) {
-      await loadState();
+      console.log('✅ Data GSI prevista atualizada');
     } else {
+      // Rollback
       const error = await res.json();
-      alert(error.message || 'Erro ao atualizar data GSI');
-      await loadState();
+      if (project) project.gsi_forecast_date = oldValue;
+      if (currentProject && currentProject.id === projectId) {
+        currentProject.gsi_forecast_date = oldValue;
+      }
+      renderGsiFields(currentProject || project);
+      showToast(error.message || 'Erro ao atualizar data GSI', 'error');
     }
   } catch (error) {
     console.error('Erro ao atualizar data GSI:', error);
-    alert('Erro ao atualizar data GSI');
+    showToast('Erro ao atualizar data GSI', 'error');
     await loadState();
   }
 };
