@@ -722,7 +722,15 @@ app.get('/api/calendar', async (req, res) => {
             color,
             store: project.store_name,
             integrator: project.integrator_name,
-            category: project.category
+            category: project.category,
+            project: {
+              id: project.id,
+              name: project.name,
+              archived: project.archived,
+              category: project.category,
+              store: { id: project.store_id, name: project.store_name },
+              integrator: project.integrator_id ? { id: project.integrator_id, name: project.integrator_name } : null
+            }
           });
         }
       });
