@@ -481,8 +481,10 @@ app.get('/api/settings/work-statuses', authenticateToken, async (req, res) => {
 
 // ==================== STATE (usado pelo app.js) ====================
 
-app.get('/api/state', async (req, res) => {
+app.get('/api/state', authenticateToken, async (req, res) => {
   try {
+    const orgId = req.user.organizationId;
+    
     // Retorna todos os projetos com suas tarefas e dados relacionados
     const projects = await db.many(
       `SELECT p.*,
@@ -497,8 +499,9 @@ app.get('/api/state', async (req, res) => {
        LEFT JOIN integrators i ON p.integrator_id = i.id
        LEFT JOIN assemblers a ON p.assembler_id = a.id
        LEFT JOIN electricians e ON p.electrician_id = e.id
-       WHERE p.archived = false
-       ORDER BY p.display_order, p.created_at DESC`
+       WHERE p.archived = false AND p.organization_id = $1
+       ORDER BY p.display_order, p.created_at DESC`,
+      [orgId]
     );
 
     // Buscar tarefas para cada projeto
@@ -512,11 +515,26 @@ app.get('/api/state', async (req, res) => {
       project.tasks = tasks;
     }
 
-    const stores = await db.many('SELECT * FROM stores WHERE active = true ORDER BY name');
-    const integrators = await db.many('SELECT * FROM integrators ORDER BY name');
-    const assemblers = await db.many('SELECT * FROM assemblers ORDER BY name');
-    const electricians = await db.many('SELECT * FROM electricians ORDER BY name');
-    const workStatuses = await db.many('SELECT * FROM work_statuses ORDER BY created_at');
+    const stores = await db.many(
+      'SELECT * FROM stores WHERE organization_id = $1 AND active = true ORDER BY name',
+      [orgId]
+    );
+    const integrators = await db.many(
+      'SELECT * FROM integrators WHERE organization_id = $1 ORDER BY name',
+      [orgId]
+    );
+    const assemblers = await db.many(
+      'SELECT * FROM assemblers WHERE organization_id = $1 ORDER BY name',
+      [orgId]
+    );
+    const electricians = await db.many(
+      'SELECT * FROM electricians WHERE organization_id = $1 ORDER BY name',
+      [orgId]
+    );
+    const workStatuses = await db.many(
+      'SELECT * FROM work_statuses WHERE organization_id = $1 ORDER BY created_at',
+      [orgId]
+    );
 
     res.json({ 
       projects, 
