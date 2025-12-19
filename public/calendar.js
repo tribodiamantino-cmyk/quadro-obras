@@ -6,6 +6,7 @@ let allEvents = [];
 let filteredEvents = [];
 let stores = [];
 let integrators = [];
+let workStatuses = [];
 let eventTypes = [];
 let activeEventTypes = ['start_date', 'delivery_forecast', 'gsi_forecast_date', 'gsi_actual_date'];
 
@@ -13,6 +14,7 @@ let activeEventTypes = ['start_date', 'delivery_forecast', 'gsi_forecast_date', 
 let selectedStore = 'all';
 let selectedIntegrator = 'all';
 let selectedCategory = 'all';
+let selectedStatus = 'all';
 
 // Navegação
 let currentDate = new Date();
@@ -28,6 +30,7 @@ const filtersPanel = document.getElementById('filtersPanel');
 const storeFilter = document.getElementById('storeFilter');
 const integratorFilter = document.getElementById('integratorFilter');
 const categoryFilter = document.getElementById('categoryFilter');
+const statusFilter = document.getElementById('statusFilter');
 const eventTypesLegend = document.getElementById('eventTypesLegend');
 const eventsList = document.getElementById('eventsList');
 const eventsContainer = document.getElementById('eventsContainer');
@@ -63,6 +66,7 @@ async function loadCalendarData() {
     allEvents = data.events || [];
     stores = data.stores || [];
     integrators = data.integrators || [];
+    workStatuses = data.workStatuses || [];
     eventTypes = data.eventTypes || [];
     
     populateFilters();
@@ -90,6 +94,14 @@ function populateFilters() {
       `<option value="${i.id}">${i.name}</option>`
     ).join('');
     integratorFilter.innerHTML = `<option value="all">Todas as integradoras</option>${options}`;
+  }
+  
+  // Status da obra
+  if (statusFilter && workStatuses.length > 0) {
+    const options = workStatuses.map(s => 
+      `<option value="${s.id}">${s.name}</option>`
+    ).join('');
+    statusFilter.innerHTML = `<option value="all">Todos os status</option>${options}`;
   }
 }
 
@@ -148,6 +160,9 @@ function applyFilters() {
     
     // Filtro por categoria
     if (selectedCategory !== 'all' && event.project.category !== selectedCategory) return false;
+    
+    // Filtro por status da obra
+    if (selectedStatus !== 'all' && event.project.status?.id !== selectedStatus) return false;
     
     // Não mostrar arquivadas
     if (event.project.archived) return false;
@@ -276,7 +291,11 @@ function selectDay(dateStr) {
   selectedDateEl.textContent = formattedDate;
   
   // Renderizar eventos
-  eventsContainer.innerHTML = dayEvents.map(event => `
+  eventsContainer.innerHTML = dayEvents.map(event => {
+    const categoryIcon = event.project.category === 'reforma' ? '🔧' : '🏗️';
+    const statusColor = event.project.status?.color || '#94a3b8';
+    
+    return `
     <div class="event-card" style="border-color: ${event.color}" onclick='showEventDetails(${JSON.stringify(event).replace(/'/g, "&apos;")})'>
       <div class="event-card-header">
         <div class="event-card-title">${event.project.name}</div>
@@ -284,13 +303,21 @@ function selectDay(dateStr) {
           ${getEventIcon(event.type)} ${event.typeLabel}
         </div>
       </div>
+      ${event.project.client_name ? `<div class="event-card-client">👤 ${event.project.client_name}</div>` : ''}
       <div class="event-card-details">
         <span>🏪 ${event.project.store?.code || '-'}</span>
-        <span>📊 ${event.project.status?.name || '-'}</span>
-        ${event.project.integrator ? `<span>🔌 ${event.project.integrator.name}</span>` : ''}
+        <span style="color: ${statusColor}">📊 ${event.project.status?.name || '-'}</span>
+        <span>${categoryIcon} ${event.project.category === 'reforma' ? 'Reforma' : 'Nova'}</span>
       </div>
+      ${event.project.integrator || event.project.assembler || event.project.electrician ? `
+      <div class="event-card-team">
+        ${event.project.integrator ? `<span>🔌 ${event.project.integrator.name}</span>` : ''}
+        ${event.project.assembler ? `<span>🔧 ${event.project.assembler.name}</span>` : ''}
+        ${event.project.electrician ? `<span>⚡ ${event.project.electrician.name}</span>` : ''}
+      </div>
+      ` : ''}
     </div>
-  `).join('');
+  `}).join('');
   
   eventsList.style.display = 'block';
   
@@ -318,9 +345,15 @@ function showEventDetails(event) {
       <label>Obra</label>
       <div class="value">${event.project.name}</div>
     </div>
+    ${event.project.client_name ? `
+    <div class="modal-detail">
+      <label>Cliente</label>
+      <div class="value">👤 ${event.project.client_name}</div>
+    </div>
+    ` : ''}
     <div class="modal-detail">
       <label>Loja</label>
-      <div class="value">${event.project.store?.code || '-'} ${event.project.store?.name || ''}</div>
+      <div class="value">🏪 ${event.project.store?.code || '-'} ${event.project.store?.name || ''}</div>
     </div>
     <div class="modal-detail">
       <label>Categoria</label>
@@ -328,16 +361,39 @@ function showEventDetails(event) {
     </div>
     <div class="modal-detail">
       <label>Status</label>
-      <div class="value" style="color: ${event.project.status?.color || '#fff'}">
-        ${event.project.status?.name || '-'}
+      <div class="value" style="color: ${event.project.status?.color || '#94a3b8'}">
+        📊 ${event.project.status?.name || 'Não definido'}
       </div>
     </div>
     ${event.project.integrator ? `
       <div class="modal-detail">
         <label>Integradora</label>
-        <div class="value">${event.project.integrator.name}</div>
+        <div class="value">🔌 ${event.project.integrator.name}</div>
       </div>
     ` : ''}
+    ${event.project.assembler ? `
+      <div class="modal-detail">
+        <label>Montador</label>
+        <div class="value">🔧 ${event.project.assembler.name}</div>
+      </div>
+    ` : ''}
+    ${event.project.electrician ? `
+      <div class="modal-detail">
+        <label>Eletricista</label>
+        <div class="value">⚡ ${event.project.electrician.name}</div>
+      </div>
+    ` : ''}
+    ${event.project.details_text ? `
+      <div class="modal-detail">
+        <label>Observações</label>
+        <div class="value" style="font-size: 12px; color: #94a3b8; white-space: pre-wrap;">${event.project.details_text}</div>
+      </div>
+    ` : ''}
+    <div class="modal-actions" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+      <a href="/" class="btn-open-project" style="display: inline-block; background: #3b82f6; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600;">
+        📋 Ver no Quadro
+      </a>
+    </div>
   `;
   
   modalOverlay.classList.add('show');
@@ -390,6 +446,16 @@ function setupEventListeners() {
     renderCalendar();
     eventsList.style.display = 'none';
   });
+  
+  // Filtro de status
+  if (statusFilter) {
+    statusFilter.addEventListener('change', () => {
+      selectedStatus = statusFilter.value;
+      applyFilters();
+      renderCalendar();
+      eventsList.style.display = 'none';
+    });
+  }
   
   // Modal
   modalClose.addEventListener('click', closeModal);

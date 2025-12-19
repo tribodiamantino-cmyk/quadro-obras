@@ -1072,12 +1072,28 @@ app.get('/api/calendar', async (req, res) => {
     const projects = await db.many(
       `SELECT p.*,
               s.name as store_name,
-              i.name as integrator_name
+              s.code as store_code,
+              ws.name as work_status_name,
+              ws.color as work_status_color,
+              i.name as integrator_name,
+              a.name as assembler_name,
+              e.name as electrician_name
        FROM projects p
        LEFT JOIN stores s ON p.store_id = s.id
+       LEFT JOIN work_statuses ws ON p.work_status_id = ws.id
        LEFT JOIN integrators i ON p.integrator_id = i.id
+       LEFT JOIN assemblers a ON p.assembler_id = a.id
+       LEFT JOIN electricians e ON p.electrician_id = e.id
        WHERE p.archived = false`
     );
+
+    // Helper para formatar data ISO para YYYY-MM-DD
+    const formatDate = (dateValue) => {
+      if (!dateValue) return null;
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return null;
+      return date.toISOString().split('T')[0];
+    };
 
     // Transformar em eventos
     const events = [];
@@ -1089,26 +1105,47 @@ app.get('/api/calendar', async (req, res) => {
     ];
 
     projects.forEach(project => {
-      eventTypes.forEach(({ field, type, label, color }) => {
-        if (project[field]) {
+      eventTypes.forEach(({ field, type, label, color, icon }) => {
+        const dateValue = formatDate(project[field]);
+        if (dateValue) {
           events.push({
             id: `${project.id}-${type}`,
             projectId: project.id,
             title: project.name,
-            date: project[field],
+            date: dateValue,
             type,
             typeLabel: label,
             color,
-            store: project.store_name,
-            integrator: project.integrator_name,
-            category: project.category,
+            icon,
             project: {
               id: project.id,
               name: project.name,
+              client_name: project.client_name,
               archived: project.archived,
               category: project.category,
-              store: { id: project.store_id, name: project.store_name },
-              integrator: project.integrator_id ? { id: project.integrator_id, name: project.integrator_name } : null
+              store: project.store_id ? { 
+                id: project.store_id, 
+                code: project.store_code,
+                name: project.store_name 
+              } : null,
+              status: project.work_status_id ? {
+                id: project.work_status_id,
+                name: project.work_status_name,
+                color: project.work_status_color
+              } : null,
+              integrator: project.integrator_id ? { 
+                id: project.integrator_id, 
+                name: project.integrator_name 
+              } : null,
+              assembler: project.assembler_id ? {
+                id: project.assembler_id,
+                name: project.assembler_name
+              } : null,
+              electrician: project.electrician_id ? {
+                id: project.electrician_id,
+                name: project.electrician_name
+              } : null,
+              details_text: project.details_text
             }
           });
         }
@@ -1117,8 +1154,9 @@ app.get('/api/calendar', async (req, res) => {
 
     const stores = await db.many('SELECT * FROM stores WHERE active = true ORDER BY name');
     const integrators = await db.many('SELECT * FROM integrators ORDER BY name');
+    const workStatuses = await db.many('SELECT * FROM work_statuses ORDER BY name');
 
-    res.json({ events, stores, integrators, eventTypes });
+    res.json({ events, stores, integrators, workStatuses, eventTypes });
   } catch (error) {
     console.error('Erro no calendário:', error);
     res.status(500).json({ message: error.message });
