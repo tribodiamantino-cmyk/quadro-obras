@@ -4,9 +4,17 @@
 let allProjects = [];
 let allStores = [];
 let allIntegrators = [];
+let allAssemblers = [];
+let allElectricians = [];
+let allTypes = [];
+let allStatuses = [];
 let currentFilter = 'all';
 let selectedStore = 'all';
 let selectedIntegrator = 'all';
+let selectedType = 'all';
+let selectedAssembler = 'all';
+let selectedElectrician = 'all';
+let selectedStatus = 'all';
 let startDateFrom = '';
 let startDateTo = '';
 let endDateFrom = '';
@@ -21,6 +29,10 @@ const completedProjectsEl = document.getElementById('completedProjects');
 const archivedProjectsEl = document.getElementById('archivedProjects');
 const storeFilter = document.getElementById('storeFilter');
 const integratorFilter = document.getElementById('integratorFilter');
+const typeFilter = document.getElementById('typeFilter');
+const assemblerFilter = document.getElementById('assemblerFilter');
+const electricianFilter = document.getElementById('electricianFilter');
+const statusFilter = document.getElementById('statusFilter');
 const startDateFromInput = document.getElementById('startDateFrom');
 const startDateToInput = document.getElementById('startDateTo');
 const endDateFromInput = document.getElementById('endDateFrom');
@@ -53,14 +65,52 @@ async function loadProjects() {
     allStores = data.stores || [];
     allIntegrators = data.integrators || [];
     
+    // Extrair listas únicas de tipos, montadores, eletricistas e status
+    extractUniqueValues();
+    
     populateStoresDropdown();
     populateIntegratorsDropdown();
+    populateTypesDropdown();
+    populateAssemblersDropdown();
+    populateElectriciansDropdown();
+    populateStatusesDropdown();
     updateStats();
     renderProjects();
   } catch (error) {
     console.error('Erro ao carregar projetos:', error);
     showError();
   }
+}
+
+// Extrair valores únicos dos projetos
+function extractUniqueValues() {
+  // Tipos
+  const typesSet = new Set();
+  allProjects.forEach(p => {
+    if (p.category) typesSet.add(p.category);
+  });
+  allTypes = Array.from(typesSet).sort();
+  
+  // Montadores
+  const assemblersSet = new Set();
+  allProjects.forEach(p => {
+    if (p.assembler?.name) assemblersSet.add(JSON.stringify({ id: p.assembler.id, name: p.assembler.name }));
+  });
+  allAssemblers = Array.from(assemblersSet).map(s => JSON.parse(s)).sort((a, b) => a.name.localeCompare(b.name));
+  
+  // Eletricistas
+  const electriciansSet = new Set();
+  allProjects.forEach(p => {
+    if (p.electrician?.name) electriciansSet.add(JSON.stringify({ id: p.electrician.id, name: p.electrician.name }));
+  });
+  allElectricians = Array.from(electriciansSet).map(s => JSON.parse(s)).sort((a, b) => a.name.localeCompare(b.name));
+  
+  // Status
+  const statusesSet = new Set();
+  allProjects.forEach(p => {
+    if (p.work_status?.name) statusesSet.add(JSON.stringify({ id: p.work_status.id, name: p.work_status.name }));
+  });
+  allStatuses = Array.from(statusesSet).map(s => JSON.parse(s)).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 // Preencher dropdown de lojas
@@ -83,6 +133,50 @@ function populateIntegratorsDropdown() {
   ).join('');
   
   integratorFilter.innerHTML = `<option value="all">Todas as integradoras</option>${options}`;
+}
+
+// Preencher dropdown de tipos
+function populateTypesDropdown() {
+  if (!typeFilter || allTypes.length === 0) return;
+  
+  const options = allTypes.map(type => 
+    `<option value="${type}">${type}</option>`
+  ).join('');
+  
+  typeFilter.innerHTML = `<option value="all">Todos os tipos</option>${options}`;
+}
+
+// Preencher dropdown de montadores
+function populateAssemblersDropdown() {
+  if (!assemblerFilter || allAssemblers.length === 0) return;
+  
+  const options = allAssemblers.map(assembler => 
+    `<option value="${assembler.id}">${assembler.name}</option>`
+  ).join('');
+  
+  assemblerFilter.innerHTML = `<option value="all">Todos os montadores</option>${options}`;
+}
+
+// Preencher dropdown de eletricistas
+function populateElectriciansDropdown() {
+  if (!electricianFilter || allElectricians.length === 0) return;
+  
+  const options = allElectricians.map(electrician => 
+    `<option value="${electrician.id}">${electrician.name}</option>`
+  ).join('');
+  
+  electricianFilter.innerHTML = `<option value="all">Todos os eletricistas</option>${options}`;
+}
+
+// Preencher dropdown de status
+function populateStatusesDropdown() {
+  if (!statusFilter || allStatuses.length === 0) return;
+  
+  const options = allStatuses.map(status => 
+    `<option value="${status.id}">${status.name}</option>`
+  ).join('');
+  
+  statusFilter.innerHTML = `<option value="all">Todos os status</option>${options}`;
 }
 
 // Atualizar estatísticas
@@ -183,6 +277,26 @@ function filterProjects() {
       return false;
     }
     
+    // Filtro por tipo de obra
+    if (selectedType !== 'all' && project.category !== selectedType) {
+      return false;
+    }
+    
+    // Filtro por montador
+    if (selectedAssembler !== 'all' && project.assembler?.id !== selectedAssembler) {
+      return false;
+    }
+    
+    // Filtro por eletricista
+    if (selectedElectrician !== 'all' && project.electrician?.id !== selectedElectrician) {
+      return false;
+    }
+    
+    // Filtro por status
+    if (selectedStatus !== 'all' && project.work_status?.id !== selectedStatus) {
+      return false;
+    }
+    
     // Filtro por data de início (De)
     if (startDateFrom && project.forecast_start) {
       if (new Date(project.forecast_start) < new Date(startDateFrom)) {
@@ -248,6 +362,38 @@ function setupAdvancedFilters() {
   if (integratorFilter) {
     integratorFilter.addEventListener('change', () => {
       selectedIntegrator = integratorFilter.value;
+      renderProjects();
+    });
+  }
+  
+  // Filtro de tipo
+  if (typeFilter) {
+    typeFilter.addEventListener('change', () => {
+      selectedType = typeFilter.value;
+      renderProjects();
+    });
+  }
+  
+  // Filtro de montador
+  if (assemblerFilter) {
+    assemblerFilter.addEventListener('change', () => {
+      selectedAssembler = assemblerFilter.value;
+      renderProjects();
+    });
+  }
+  
+  // Filtro de eletricista
+  if (electricianFilter) {
+    electricianFilter.addEventListener('change', () => {
+      selectedElectrician = electricianFilter.value;
+      renderProjects();
+    });
+  }
+  
+  // Filtro de status
+  if (statusFilter) {
+    statusFilter.addEventListener('change', () => {
+      selectedStatus = statusFilter.value;
       renderProjects();
     });
   }
