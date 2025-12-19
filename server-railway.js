@@ -199,6 +199,102 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 
 // ==================== PROJECTS ====================
 
+// IMPORTANTE: /api/projects/state DEVE vir ANTES de /api/projects/:id
+// para evitar que "state" seja tratado como um UUID
+
+app.get('/api/projects/state', authenticateToken, async (req, res) => {
+  try {
+    const orgId = req.user.organizationId;
+    const currentProjectId = req.query.currentProjectId;
+    
+    // Buscar todos os projetos
+    const projects = await db.many(
+      `SELECT p.*,
+              s.name as store_name, s.code as store_code, s.color as store_color,
+              ws.name as work_status_name, ws.color as work_status_color,
+              i.name as integrator_name,
+              a.name as assembler_name,
+              e.name as electrician_name
+       FROM projects p
+       LEFT JOIN stores s ON p.store_id = s.id
+       LEFT JOIN work_statuses ws ON p.work_status_id = ws.id
+       LEFT JOIN integrators i ON p.integrator_id = i.id
+       LEFT JOIN assemblers a ON p.assembler_id = a.id
+       LEFT JOIN electricians e ON p.electrician_id = e.id
+       WHERE p.archived = false AND p.organization_id = $1
+       ORDER BY p.display_order, p.created_at DESC`,
+      [orgId]
+    );
+
+    // Buscar tarefas para todos os projetos
+    const allTasks = await db.many(
+      `SELECT t.* FROM tasks t
+       INNER JOIN projects p ON t.project_id = p.id
+       WHERE p.organization_id = $1
+       ORDER BY t.order_position, t.created_at`,
+      [orgId]
+    );
+
+    // Organizar tarefas por projeto
+    const tasksByProject = {};
+    allTasks.forEach(task => {
+      if (!tasksByProject[task.project_id]) {
+        tasksByProject[task.project_id] = [];
+      }
+      tasksByProject[task.project_id].push(task);
+    });
+
+    // Adicionar tarefas aos projetos
+    projects.forEach(project => {
+      project.tasks = tasksByProject[project.id] || [];
+    });
+
+    // Buscar projeto atual se especificado
+    let currentProject = null;
+    if (currentProjectId) {
+      currentProject = projects.find(p => p.id === currentProjectId);
+    } else if (projects.length > 0) {
+      // Se não especificado, pegar o primeiro projeto "atual" ou o primeiro da lista
+      currentProject = projects.find(p => p.is_current) || projects[0];
+    }
+
+    const stores = await db.many(
+      'SELECT * FROM stores WHERE organization_id = $1 AND active = true ORDER BY name',
+      [orgId]
+    );
+    const integrators = await db.many(
+      'SELECT * FROM integrators WHERE organization_id = $1 ORDER BY name',
+      [orgId]
+    );
+    const assemblers = await db.many(
+      'SELECT * FROM assemblers WHERE organization_id = $1 ORDER BY name',
+      [orgId]
+    );
+    const electricians = await db.many(
+      'SELECT * FROM electricians WHERE organization_id = $1 ORDER BY name',
+      [orgId]
+    );
+    const workStatuses = await db.many(
+      'SELECT * FROM work_statuses WHERE organization_id = $1 ORDER BY created_at',
+      [orgId]
+    );
+
+    res.json({ 
+      projects,
+      currentProject,
+      currentProjectId: currentProject?.id || null,
+      stores, 
+      integrators, 
+      assemblers, 
+      electricians, 
+      workStatuses
+    });
+  } catch (error) {
+    console.error('Erro ao buscar projects/state:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 app.get('/api/projects', authenticateToken, async (req, res) => {
   try {
     const projects = await db.many(
@@ -552,101 +648,6 @@ app.get('/api/state', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Erro ao buscar state:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// ==================== PROJECTS STATE (usado pelo app-simple.js) ====================
-
-app.get('/api/projects/state', authenticateToken, async (req, res) => {
-  try {
-    const orgId = req.user.organizationId;
-    const currentProjectId = req.query.currentProjectId;
-    
-    // Buscar todos os projetos
-    const projects = await db.many(
-      `SELECT p.*,
-              s.name as store_name, s.code as store_code, s.color as store_color,
-              ws.name as work_status_name, ws.color as work_status_color,
-              i.name as integrator_name,
-              a.name as assembler_name,
-              e.name as electrician_name
-       FROM projects p
-       LEFT JOIN stores s ON p.store_id = s.id
-       LEFT JOIN work_statuses ws ON p.work_status_id = ws.id
-       LEFT JOIN integrators i ON p.integrator_id = i.id
-       LEFT JOIN assemblers a ON p.assembler_id = a.id
-       LEFT JOIN electricians e ON p.electrician_id = e.id
-       WHERE p.archived = false AND p.organization_id = $1
-       ORDER BY p.display_order, p.created_at DESC`,
-      [orgId]
-    );
-
-    // Buscar tarefas para todos os projetos
-    const allTasks = await db.many(
-      `SELECT t.* FROM tasks t
-       INNER JOIN projects p ON t.project_id = p.id
-       WHERE p.organization_id = $1
-       ORDER BY t.order_position, t.created_at`,
-      [orgId]
-    );
-
-    // Organizar tarefas por projeto
-    const tasksByProject = {};
-    allTasks.forEach(task => {
-      if (!tasksByProject[task.project_id]) {
-        tasksByProject[task.project_id] = [];
-      }
-      tasksByProject[task.project_id].push(task);
-    });
-
-    // Adicionar tarefas aos projetos
-    projects.forEach(project => {
-      project.tasks = tasksByProject[project.id] || [];
-    });
-
-    // Buscar projeto atual se especificado
-    let currentProject = null;
-    if (currentProjectId) {
-      currentProject = projects.find(p => p.id === currentProjectId);
-    } else if (projects.length > 0) {
-      // Se não especificado, pegar o primeiro projeto "atual" ou o primeiro da lista
-      currentProject = projects.find(p => p.is_current) || projects[0];
-    }
-
-    const stores = await db.many(
-      'SELECT * FROM stores WHERE organization_id = $1 AND active = true ORDER BY name',
-      [orgId]
-    );
-    const integrators = await db.many(
-      'SELECT * FROM integrators WHERE organization_id = $1 ORDER BY name',
-      [orgId]
-    );
-    const assemblers = await db.many(
-      'SELECT * FROM assemblers WHERE organization_id = $1 ORDER BY name',
-      [orgId]
-    );
-    const electricians = await db.many(
-      'SELECT * FROM electricians WHERE organization_id = $1 ORDER BY name',
-      [orgId]
-    );
-    const workStatuses = await db.many(
-      'SELECT * FROM work_statuses WHERE organization_id = $1 ORDER BY created_at',
-      [orgId]
-    );
-
-    res.json({ 
-      projects,
-      currentProject,
-      currentProjectId: currentProject?.id || null,
-      stores, 
-      integrators, 
-      assemblers, 
-      electricians, 
-      workStatuses
-    });
-  } catch (error) {
-    console.error('Erro ao buscar projects/state:', error);
     res.status(500).json({ message: error.message });
   }
 });
