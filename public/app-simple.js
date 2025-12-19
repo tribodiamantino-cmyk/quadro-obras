@@ -2158,3 +2158,109 @@ async function loadVersion() {
 
 // Carregar versão ao iniciar
 loadVersion();
+
+// ==================== RESIZE DE COLUNAS ====================
+function setupColumnResizers() {
+  const resizers = document.querySelectorAll('.col-resizer');
+  const columns = document.querySelectorAll('main .col');
+  
+  if (!resizers.length || !columns.length) return;
+  
+  // Carregar tamanhos salvos do localStorage
+  const savedSizes = localStorage.getItem('columnSizes');
+  if (savedSizes) {
+    try {
+      const sizes = JSON.parse(savedSizes);
+      columns.forEach((col, i) => {
+        if (sizes[i]) {
+          col.style.flex = `0 0 ${sizes[i]}px`;
+          col.style.width = `${sizes[i]}px`;
+        }
+      });
+    } catch (e) {
+      console.warn('Erro ao carregar tamanhos de colunas:', e);
+    }
+  }
+  
+  resizers.forEach((resizer, index) => {
+    let isResizing = false;
+    let startX = 0;
+    let leftCol = null;
+    let rightCol = null;
+    let leftWidth = 0;
+    let rightWidth = 0;
+    
+    const startResize = (e) => {
+      e.preventDefault();
+      isResizing = true;
+      startX = e.clientX || e.touches?.[0]?.clientX;
+      
+      // Pegar as colunas adjacentes
+      leftCol = resizer.previousElementSibling;
+      rightCol = resizer.nextElementSibling;
+      
+      if (!leftCol || !rightCol) return;
+      
+      leftWidth = leftCol.getBoundingClientRect().width;
+      rightWidth = rightCol.getBoundingClientRect().width;
+      
+      resizer.classList.add('resizing');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    };
+    
+    const doResize = (e) => {
+      if (!isResizing || !leftCol || !rightCol) return;
+      
+      const currentX = e.clientX || e.touches?.[0]?.clientX;
+      const diff = currentX - startX;
+      
+      const newLeftWidth = Math.max(180, leftWidth + diff);
+      const newRightWidth = Math.max(180, rightWidth - diff);
+      
+      // Aplicar novos tamanhos
+      leftCol.style.flex = `0 0 ${newLeftWidth}px`;
+      leftCol.style.width = `${newLeftWidth}px`;
+      rightCol.style.flex = `0 0 ${newRightWidth}px`;
+      rightCol.style.width = `${newRightWidth}px`;
+    };
+    
+    const stopResize = () => {
+      if (!isResizing) return;
+      isResizing = false;
+      
+      resizer.classList.remove('resizing');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      
+      // Salvar tamanhos no localStorage
+      const sizes = Array.from(columns).map(col => col.getBoundingClientRect().width);
+      localStorage.setItem('columnSizes', JSON.stringify(sizes));
+    };
+    
+    // Mouse events
+    resizer.addEventListener('mousedown', startResize);
+    document.addEventListener('mousemove', doResize);
+    document.addEventListener('mouseup', stopResize);
+    
+    // Touch events (mobile)
+    resizer.addEventListener('touchstart', startResize, { passive: false });
+    document.addEventListener('touchmove', doResize, { passive: false });
+    document.addEventListener('touchend', stopResize);
+  });
+  
+  // Duplo clique para resetar
+  resizers.forEach(resizer => {
+    resizer.addEventListener('dblclick', () => {
+      columns.forEach(col => {
+        col.style.flex = '1';
+        col.style.width = '';
+      });
+      localStorage.removeItem('columnSizes');
+      showToast('Colunas resetadas', 'success');
+    });
+  });
+}
+
+// Inicializar resize das colunas
+setupColumnResizers();

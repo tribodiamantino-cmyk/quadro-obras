@@ -144,9 +144,8 @@ aside h3 {
 
 main {
   flex: 1;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(240px, 1fr));
-  gap: 12px;
+  display: flex;
+  gap: 0;
   padding: 12px;
   overflow: auto;
 }
@@ -156,7 +155,51 @@ main {
   border-radius: 10px;
   display: flex;
   flex-direction: column;
-  min-width: 220px;
+  min-width: 180px;
+  flex: 1;
+  position: relative;
+}
+
+/* Divisor de redimensionamento entre colunas */
+.col-resizer {
+  width: 12px;
+  cursor: col-resize;
+  background: transparent;
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.col-resizer:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.col-resizer::after {
+  content: '';
+  width: 4px;
+  height: 40px;
+  background: var(--ring);
+  border-radius: 2px;
+  opacity: 0.3;
+  transition: opacity 0.2s, height 0.2s;
+}
+
+.col-resizer:hover::after {
+  opacity: 0.7;
+  height: 60px;
+}
+
+.col-resizer.resizing {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.col-resizer.resizing::after {
+  opacity: 1;
+  background: var(--primary);
+  height: 80px;
 }
 
 .col h2 {
