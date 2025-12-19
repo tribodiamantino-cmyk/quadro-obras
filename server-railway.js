@@ -406,6 +406,195 @@ app.put('/api/projects/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// PATCH para atualização parcial de projeto
+app.patch('/api/projects/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const fields = Object.keys(updates);
+    const values = Object.values(updates);
+    const setClause = fields.map((field, i) => `${field} = $${i + 1}`).join(', ');
+
+    const project = await db.single(
+      `UPDATE projects
+       SET ${setClause}, updated_at = NOW()
+       WHERE id = $${fields.length + 1} AND organization_id = $${fields.length + 2}
+       RETURNING *`,
+      [...values, id, req.user.organizationId]
+    );
+
+    if (!project) {
+      return res.status(404).json({ message: 'Projeto não encontrado' });
+    }
+
+    io.emit('project:updated', project);
+    res.json(project);
+  } catch (error) {
+    console.error('Erro ao atualizar projeto:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Buscar detalhes completos de um projeto específico
+app.get('/api/projects/:id/details', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const project = await db.single(
+      `SELECT p.*,
+              s.name as store_name, s.code as store_code, s.color as store_color,
+              ws.name as work_status_name, ws.color as work_status_color,
+              i.name as integrator_name,
+              a.name as assembler_name,
+              e.name as electrician_name
+       FROM projects p
+       LEFT JOIN stores s ON p.store_id = s.id
+       LEFT JOIN work_statuses ws ON p.work_status_id = ws.id
+       LEFT JOIN integrators i ON p.integrator_id = i.id
+       LEFT JOIN assemblers a ON p.assembler_id = a.id
+       LEFT JOIN electricians e ON p.electrician_id = e.id
+       WHERE p.id = $1 AND p.organization_id = $2`,
+      [id, req.user.organizationId]
+    );
+
+    if (!project) {
+      return res.status(404).json({ message: 'Projeto não encontrado' });
+    }
+
+    const tasks = await db.many(
+      'SELECT * FROM tasks WHERE project_id = $1 ORDER BY created_at',
+      [id]
+    );
+
+    res.json({ project, tasks });
+  } catch (error) {
+    console.error('Erro ao buscar detalhes do projeto:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Arquivar/Desarquivar obra
+app.patch('/api/projects/:id/archive', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { archived } = req.body;
+
+    const project = await db.single(
+      `UPDATE projects
+       SET archived = $1, updated_at = NOW()
+       WHERE id = $2 AND organization_id = $3
+       RETURNING *`,
+      [archived === true, id, req.user.organizationId]
+    );
+
+    if (!project) {
+      return res.status(404).json({ message: 'Projeto não encontrado' });
+    }
+
+    io.emit('project:archived', project);
+    res.json(project);
+  } catch (error) {
+    console.error('Erro ao arquivar obra:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Excluir obra definitivamente
+app.delete('/api/projects/:id/permanent', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Verificar se a obra está arquivada
+    const project = await db.single(
+      'SELECT * FROM projects WHERE id = $1 AND organization_id = $2',
+      [id, req.user.organizationId]
+    );
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Projeto não encontrado' });
+    }
+    
+    if (!project.archived) {
+      return res.status(400).json({ 
+        message: 'Apenas obras arquivadas podem ser excluídas definitivamente' 
+      });
+    }
+    
+    // Excluir tarefas relacionadas primeiro
+    await db.query('DELETE FROM tasks WHERE project_id = $1', [id]);
+    
+    // Excluir projeto
+    await db.query(
+      'DELETE FROM projects WHERE id = $1 AND organization_id = $2',
+      [id, req.user.organizationId]
+    );
+    
+    io.emit('project:deleted', { id });
+    res.json({ message: 'Obra excluída definitivamente' });
+  } catch (error) {
+    console.error('Erro ao excluir obra:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Validar entrega GSI
+app.post('/api/projects/:id/validate-gsi', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentDate = new Date().toISOString().split('T')[0];
+
+    const project = await db.single(
+      `UPDATE projects
+       SET gsi_actual_date = $1, updated_at = NOW()
+       WHERE id = $2 AND organization_id = $3
+       RETURNING *`,
+      [currentDate, id, req.user.organizationId]
+    );
+
+    if (!project) {
+      return res.status(404).json({ message: 'Projeto não encontrado' });
+    }
+
+    io.emit('project:updated', project);
+    res.json({ 
+      message: 'Data efetiva de entrega GSI validada com sucesso!',
+      project,
+      actualDate: currentDate
+    });
+  } catch (error) {
+    console.error('Erro ao validar entrega GSI:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Reordenar projetos (drag & drop)
+app.post('/api/projects/reorder', authenticateToken, async (req, res) => {
+  try {
+    const { projectIds } = req.body;
+
+    if (!Array.isArray(projectIds)) {
+      return res.status(400).json({ message: 'projectIds deve ser um array' });
+    }
+
+    // Atualizar ordem de cada projeto
+    for (let i = 0; i < projectIds.length; i++) {
+      await db.query(
+        `UPDATE projects
+         SET display_order = $1, updated_at = NOW()
+         WHERE id = $2 AND organization_id = $3`,
+        [i, projectIds[i], req.user.organizationId]
+      );
+    }
+
+    io.emit('projects:reordered', { projectIds });
+    res.json({ message: 'Ordem atualizada com sucesso' });
+  } catch (error) {
+    console.error('Erro ao reordenar projetos:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 app.delete('/api/projects/:id', authenticateToken, async (req, res) => {
   try {
     // Soft delete
@@ -430,6 +619,28 @@ app.delete('/api/projects/:id', authenticateToken, async (req, res) => {
 });
 
 // ==================== TASKS ====================
+
+// Criar tarefa (rota genérica)
+app.post('/api/tasks', authenticateToken, async (req, res) => {
+  try {
+    const { title, status, projectId } = req.body;
+
+    const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    const task = await db.single(
+      `INSERT INTO tasks (id, title, status, project_id, organization_id, dates, history)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [taskId, title, status || 'Criado', projectId, req.user.organizationId, '{}', '[]']
+    );
+
+    io.emit('task:created', task);
+    res.json(task);
+  } catch (error) {
+    console.error('Erro ao criar tarefa:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
 
 app.get('/api/projects/:projectId/tasks', authenticateToken, async (req, res) => {
   try {
@@ -521,6 +732,172 @@ app.delete('/api/tasks/:id', authenticateToken, async (req, res) => {
     res.json({ message: 'Tarefa excluída com sucesso' });
   } catch (error) {
     console.error('Erro ao excluir tarefa:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// PATCH para atualização parcial de tarefa
+app.patch('/api/tasks/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+
+    console.log(`📝 Atualizando tarefa ${id}:`, updates);
+
+    const fields = Object.keys(updates);
+    const values = Object.values(updates);
+    const setClause = fields.map((field, i) => `${field} = $${i + 1}`).join(', ');
+
+    const task = await db.single(
+      `UPDATE tasks t
+       SET ${setClause}, updated_at = NOW()
+       FROM projects p
+       WHERE t.id = $${fields.length + 1}
+         AND t.project_id = p.id
+         AND p.organization_id = $${fields.length + 2}
+       RETURNING t.*`,
+      [...values, id, req.user.organizationId]
+    );
+
+    if (!task) {
+      console.error(`❌ Tarefa ${id} não encontrada ou não pertence à organização`);
+      return res.status(404).json({ message: 'Tarefa não encontrada' });
+    }
+
+    console.log(`✅ Tarefa ${id} atualizada com sucesso`);
+    io.emit('task:updated', task);
+    res.json(task);
+  } catch (error) {
+    console.error('❌ Erro ao atualizar tarefa:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Mover tarefa para próxima/anterior coluna
+app.patch('/api/tasks/:id/move', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { direction } = req.body;
+    
+    // Buscar tarefa atual
+    const task = await db.single(
+      `SELECT t.* FROM tasks t
+       JOIN projects p ON t.project_id = p.id
+       WHERE t.id = $1 AND p.organization_id = $2`,
+      [id, req.user.organizationId]
+    );
+    
+    if (!task) {
+      return res.status(404).json({ message: 'Tarefa não encontrada' });
+    }
+    
+    // Mapeamento de fluxo de status
+    const statusFlow = {
+      'backlog': { next: 'doing', prev: null },
+      'doing': { next: 'done', prev: 'backlog' },
+      'done': { next: null, prev: 'doing' }
+    };
+    
+    const newStatus = statusFlow[task.status]?.[direction];
+    
+    if (!newStatus) {
+      return res.status(400).json({ message: 'Movimento inválido' });
+    }
+    
+    // Atualizar status
+    const updatedTask = await db.single(
+      `UPDATE tasks t
+       SET status = $1, updated_at = NOW()
+       FROM projects p
+       WHERE t.id = $2 AND t.project_id = p.id AND p.organization_id = $3
+       RETURNING t.*`,
+      [newStatus, id, req.user.organizationId]
+    );
+    
+    io.emit('task:updated', updatedTask);
+    res.json(updatedTask);
+  } catch (error) {
+    console.error('Erro ao mover tarefa:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Criar pendência (desdobramento de tarefa)
+app.post('/api/tasks/:id/create-pending', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Buscar tarefa original
+    const originalTask = await db.single(
+      `SELECT t.* FROM tasks t
+       JOIN projects p ON t.project_id = p.id
+       WHERE t.id = $1 AND p.organization_id = $2`,
+      [id, req.user.organizationId]
+    );
+    
+    if (!originalTask) {
+      return res.status(404).json({ message: 'Tarefa não encontrada' });
+    }
+    
+    // Validar que a tarefa está em "Em separação"
+    if (originalTask.status !== 'Em separação') {
+      return res.status(400).json({ message: 'Tarefa deve estar em "Em Separação"' });
+    }
+    
+    // Mover tarefa original para "Em romaneio"
+    await db.query(
+      `UPDATE tasks t
+       SET status = 'Em romaneio', updated_at = NOW()
+       FROM projects p
+       WHERE t.id = $1 AND t.project_id = p.id AND p.organization_id = $2`,
+      [id, req.user.organizationId]
+    );
+    
+    // Criar cópia como pendência
+    const pendingId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const pendingTask = await db.single(
+      `INSERT INTO tasks (id, title, status, project_id, organization_id)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [pendingId, `Pendencia ${originalTask.title}`, 'Pendencia', originalTask.project_id, req.user.organizationId]
+    );
+    
+    io.emit('task:updated', { id, status: 'Em romaneio' });
+    io.emit('task:created', pendingTask);
+    
+    res.json({ 
+      original: { id, status: 'Em romaneio' },
+      pending: pendingTask 
+    });
+  } catch (error) {
+    console.error('Erro ao criar pendência:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Reordenar tarefas
+app.post('/api/tasks/reorder', authenticateToken, async (req, res) => {
+  try {
+    const { taskIds, projectId } = req.body;
+
+    if (!Array.isArray(taskIds)) {
+      return res.status(400).json({ message: 'taskIds deve ser um array' });
+    }
+
+    for (let i = 0; i < taskIds.length; i++) {
+      await db.query(
+        `UPDATE tasks t
+         SET display_order = $1, updated_at = NOW()
+         FROM projects p
+         WHERE t.id = $2 AND t.project_id = p.id AND p.organization_id = $3`,
+        [i, taskIds[i], req.user.organizationId]
+      );
+    }
+
+    io.emit('tasks:reordered', { taskIds, projectId });
+    res.json({ message: 'Ordem das tarefas atualizada com sucesso' });
+  } catch (error) {
+    console.error('Erro ao reordenar tarefas:', error);
     res.status(500).json({ message: error.message });
   }
 });
