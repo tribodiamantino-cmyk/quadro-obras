@@ -813,7 +813,6 @@ function formatDate(dateString) {
 window.selectProject = async function(projectId) {
   if (currentProjectId === projectId) return; // Já está selecionado
   
-  const previousProjectId = currentProjectId;
   currentProjectId = projectId;
   
   // Atualizar visualmente qual card está ativo
@@ -826,22 +825,16 @@ window.selectProject = async function(projectId) {
     selectedCard.classList.add('active');
   }
   
-  // Carregar apenas os detalhes do projeto selecionado
-  try {
-    const res = await api(`/api/projects/${projectId}/details`);
-    if (res.ok) {
-      const projectData = await res.json();
-      state.currentProject = projectData.project;
-      state.tasks = projectData.tasks;
-      
-      // Renderizar apenas detalhes e tarefas
-      renderDetails();
-      renderTasks();
-    }
-  } catch (error) {
-    console.error('Erro ao carregar projeto:', error);
-    // Em caso de erro, reverter
-    currentProjectId = previousProjectId;
+  // Usar os dados que já estão carregados no state
+  const project = state.projects.find(p => p.id === projectId);
+  if (project) {
+    state.currentProject = project;
+    
+    // Renderizar apenas detalhes e tarefas
+    renderDetails();
+    renderTasks();
+  } else {
+    console.error('Projeto não encontrado:', projectId);
   }
 };
 
