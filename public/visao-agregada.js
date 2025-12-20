@@ -237,7 +237,7 @@ function renderTaskCard(task, statusColor) {
   const storeCode = project.store?.code || '?';
   const storeName = project.store?.name || 'Sem loja';
   const integratorName = project.integrator?.name || 'Sem integradora';
-  const projectName = project.code || 'Sem código';
+  const projectName = project.code || project.client_name || 'Sem código';
   const typeIcon = project.category === 'reforma' ? '🔧' : '🏗️';
   
   // Nome da tarefa (pode ser 'name' ou 'title')
@@ -268,7 +268,7 @@ function renderTaskCard(task, statusColor) {
       
       <div class="task-info">
         <div class="task-info-row">
-          <span>�️</span>
+          <span>📋</span>
           <span><strong>${projectName}</strong></span>
         </div>
         <div class="task-info-row">
