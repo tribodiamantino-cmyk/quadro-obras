@@ -199,9 +199,6 @@ function renderBoard() {
   const boardEl = document.getElementById('board');
   const filteredTasks = getFilteredTasks();
   
-  // Atualizar estatísticas
-  updateStats(filteredTasks);
-  
   // Renderizar colunas com os status das TAREFAS
   const columns = taskStatuses.map(status => {
     // Filtrar tarefas por status (campo status da tarefa)
@@ -240,7 +237,7 @@ function renderTaskCard(task, statusColor) {
   const storeCode = project.store?.code || '?';
   const storeName = project.store?.name || 'Sem loja';
   const integratorName = project.integrator?.name || 'Sem integradora';
-  const clientName = project.client_name || 'Sem cliente';
+  const projectName = project.code || 'Sem código';
   const typeIcon = project.category === 'reforma' ? '🔧' : '🏗️';
   
   // Nome da tarefa (pode ser 'name' ou 'title')
@@ -271,12 +268,12 @@ function renderTaskCard(task, statusColor) {
       
       <div class="task-info">
         <div class="task-info-row">
-          <span>🏪</span>
-          <span><strong>${storeCode}</strong> ${storeName}</span>
+          <span>�️</span>
+          <span><strong>${projectName}</strong></span>
         </div>
         <div class="task-info-row">
-          <span>👤</span>
-          <span>${clientName}</span>
+          <span>🏪</span>
+          <span>${storeCode} - ${storeName}</span>
         </div>
         <div class="task-info-row">
           <span>🔌</span>
@@ -289,30 +286,8 @@ function renderTaskCard(task, statusColor) {
           </div>
         `}
       </div>
-      
-      <div class="task-footer">
-        <div class="task-tags">
-          <div class="task-tag">${project.code || 'S/N'}</div>
-        </div>
-      </div>
     </div>
   `;
-}
-
-// Atualizar estatísticas
-function updateStats(tasks) {
-  document.getElementById('total-tasks').textContent = tasks.length;
-  
-  const uniqueProjects = new Set(tasks.map(t => t.project.id));
-  document.getElementById('total-projects').textContent = uniqueProjects.size;
-  
-  // Tarefas concluídas (status = 'Entregue')
-  const completedTasks = tasks.filter(t => t.status === 'Entregue');
-  document.getElementById('completed-tasks').textContent = completedTasks.length;
-  
-  // Tarefas em andamento (todos os outros status)
-  const progressTasks = tasks.filter(t => t.status !== 'Entregue');
-  document.getElementById('progress-tasks').textContent = progressTasks.length;
 }
 
 // Configurar listeners de filtros

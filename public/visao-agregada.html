@@ -164,44 +164,8 @@
       background: #475569;
     }
 
-    .stats-bar {
-      background: #111827;
-      margin: 0 20px 15px;
-      padding: 10px 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      border: 1px solid #334155;
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .stat-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .stat-item span:first-child {
-      font-size: 20px;
-    }
-
-    .stat-item span:last-child {
-      font-size: 13px;
-      color: #9ca3af;
-    }
-
-    .stat-value {
-      font-weight: 700;
-      color: #e5e7eb;
-      font-size: 16px;
-    }
-
     .board-container {
       padding: 0 20px 20px;
-      height: calc(100vh - 280px);
-      overflow-y: auto;
     }
 
     .board {
@@ -660,26 +624,6 @@
       <button class="btn-clear" onclick="clearFilters()">
         🗑️ Limpar Filtros
       </button>
-    </div>
-  </div>
-
-  <!-- Stats Bar -->
-  <div class="stats-bar">
-    <div class="stat-item">
-      <span>📊</span>
-      <span>Total de tarefas: <span class="stat-value" id="total-tasks">0</span></span>
-    </div>
-    <div class="stat-item">
-      <span>🏗️</span>
-      <span>Obras ativas: <span class="stat-value" id="total-projects">0</span></span>
-    </div>
-    <div class="stat-item">
-      <span>✅</span>
-      <span>Concluídas: <span class="stat-value" id="completed-tasks">0</span></span>
-    </div>
-    <div class="stat-item">
-      <span>🔄</span>
-      <span>Em andamento: <span class="stat-value" id="progress-tasks">0</span></span>
     </div>
   </div>
 
