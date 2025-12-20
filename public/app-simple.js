@@ -1505,47 +1505,54 @@ const shouldReloadFromSocket = () => {
   return true;
 };
 
-socket.on('taskCreated', () => {
+socket.on('task:created', (task) => {
   if (shouldReloadFromSocket()) {
-    console.log('📥 Socket: taskCreated - recarregando...');
+    console.log('📥 Socket: task:created - recarregando...', task);
+    clearCache(); // Força reload fresco
     loadState();
   }
 });
 
-socket.on('taskUpdated', (data) => {
+socket.on('task:updated', (data) => {
   if (shouldReloadFromSocket()) {
-    console.log('📥 Socket: taskUpdated - recarregando...');
+    console.log('📥 Socket: task:updated - recarregando...', data);
+    clearCache(); // Força reload fresco
     loadState();
   }
 });
 
-socket.on('taskDeleted', () => {
+socket.on('task:deleted', (taskId) => {
   if (shouldReloadFromSocket()) {
-    console.log('📥 Socket: taskDeleted - recarregando...');
+    console.log('📥 Socket: task:deleted - recarregando...', taskId);
+    clearCache(); // Força reload fresco
     loadState();
   }
 });
 
-socket.on('projectCreated', () => {
-  console.log('📥 Socket: projectCreated - recarregando...');
+socket.on('project:created', () => {
+  console.log('📥 Socket: project:created - recarregando...');
+  clearCache(); // Força reload fresco
   loadState();
 });
 
-socket.on('projectUpdated', () => {
-  console.log('📥 Socket: projectUpdated - recarregando...');
+socket.on('project:updated', () => {
+  console.log('📥 Socket: project:updated - recarregando...');
+  clearCache(); // Força reload fresco
   loadState();
 });
 
-socket.on('projectsReordered', () => {
+socket.on('projects:reordered', () => {
   if (shouldReloadFromSocket()) {
-    console.log('📥 Socket: projectsReordered - recarregando...');
+    console.log('📥 Socket: projects:reordered - recarregando...');
+    clearCache(); // Força reload fresco
     loadState();
   }
 });
 
-socket.on('tasksReordered', () => {
+socket.on('tasks:reordered', () => {
   if (shouldReloadFromSocket()) {
-    console.log('📥 Socket: tasksReordered - recarregando...');
+    console.log('📥 Socket: tasks:reordered - recarregando...');
+    clearCache(); // Força reload fresco
     loadState();
   }
 });
