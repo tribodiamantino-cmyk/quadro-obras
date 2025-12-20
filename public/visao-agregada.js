@@ -237,7 +237,6 @@ function renderTaskCard(task, statusColor) {
   const project = task.project;
   const storeCode = project.store?.code || '?';
   const storeName = project.store?.name || 'Sem loja';
-  const integratorName = project.integrator?.name || 'Sem integradora';
   
   // Nome da obra (campo 'name' do projeto)
   const projectName = project.name || project.client_name || 'Sem nome';
@@ -271,10 +270,6 @@ function renderTaskCard(task, statusColor) {
         <div class="task-info-row">
           <span>🏪</span>
           <span>${storeCode} - ${storeName}</span>
-        </div>
-        <div class="task-info-row">
-          <span>🔌</span>
-          <span>${integratorName}</span>
         </div>
         ${responsible ? `
           <div class="task-info-row">
