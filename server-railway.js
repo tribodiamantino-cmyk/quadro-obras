@@ -390,7 +390,7 @@ app.get('/api/projects/state', authenticateToken, async (req, res) => {
       }
       tasksByProject[task.project_id].push(task);
     });
-
+    
     // Adicionar tarefas aos projetos
     projects.forEach(project => {
       project.tasks = tasksByProject[project.id] || [];

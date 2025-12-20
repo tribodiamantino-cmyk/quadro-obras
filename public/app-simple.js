@@ -27,6 +27,13 @@ let cacheLoaded = false;
 let lastFullLoad = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
+// Função para invalidar cache (força reload na próxima requisição)
+function clearCache() {
+  cacheLoaded = false;
+  lastFullLoad = 0;
+  console.log('🗑️ Cache invalidado');
+}
+
 // ==================== HELPERS DE OTIMIZAÇÃO ====================
 
 // Debounce: Aguarda pausa para executar
@@ -1250,6 +1257,8 @@ if (btnAddCriado && inputCriado) {
     const success = await optimisticUpdate(updateUI, rollback, apiCall);
     
     if (success) {
+      // ✨ INVALIDAR CACHE para garantir que F5 mostre a tarefa
+      clearCache();
       showToast('✅ Tarefa criada!', 'success');
     }
   };
@@ -1293,6 +1302,7 @@ window.deleteTask = async function(taskId) {
   const success = await optimisticUpdate(updateUI, rollback, apiCall);
   
   if (success) {
+    clearCache(); // Invalidar cache após excluir tarefa
     showToast('✓ Tarefa excluída', 'success');
   }
 };
@@ -1998,6 +2008,7 @@ window.moveTask = async function(taskId, direction) {
   const success = await optimisticUpdate(updateUI, rollback, apiCall);
   
   if (success) {
+    clearCache(); // Invalidar cache após mover tarefa
     showToast('✓ Tarefa movida', 'success');
   }
 };
