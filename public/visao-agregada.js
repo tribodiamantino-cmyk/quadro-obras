@@ -90,6 +90,7 @@ function extractAllTasks() {
           ...task,
           project: {
             id: project.id,
+            name: project.name,
             code: project.code,
             client_name: project.client_name,
             category: project.category,
@@ -237,20 +238,16 @@ function renderTaskCard(task, statusColor) {
   const storeCode = project.store?.code || '?';
   const storeName = project.store?.name || 'Sem loja';
   const integratorName = project.integrator?.name || 'Sem integradora';
-  const projectName = project.code || project.client_name || 'Sem código';
+  
+  // Nome da obra (campo 'name' do projeto)
+  const projectName = project.name || project.client_name || 'Sem nome';
   const typeIcon = project.category === 'reforma' ? '🔧' : '🏗️';
   
   // Nome da tarefa (pode ser 'name' ou 'title')
   const taskName = task.name || task.title || 'Sem nome';
   
-  // Definir responsável baseado no tipo de tarefa
-  let responsible = '';
-  const taskNameLower = taskName.toLowerCase();
-  if (taskNameLower.includes('montag') || taskNameLower.includes('instalação')) {
-    responsible = project.assembler?.name || '';
-  } else if (taskNameLower.includes('elétric') || taskNameLower.includes('eletric')) {
-    responsible = project.electrician?.name || '';
-  }
+  // Responsável da tarefa (campo direto da tarefa)
+  const responsible = task.responsible || task.assignee || '';
   
   return `
     <div class="task-card" 
@@ -263,12 +260,12 @@ function renderTaskCard(task, statusColor) {
       
       <div class="task-header">
         <div class="task-name">${taskName}</div>
-        ${typeIcon && `<div class="task-tag">${typeIcon}</div>`}
+        ${typeIcon ? `<div class="task-tag">${typeIcon}</div>` : ''}
       </div>
       
       <div class="task-info">
         <div class="task-info-row">
-          <span>📋</span>
+          <span>🏗️</span>
           <span><strong>${projectName}</strong></span>
         </div>
         <div class="task-info-row">
@@ -279,12 +276,12 @@ function renderTaskCard(task, statusColor) {
           <span>🔌</span>
           <span>${integratorName}</span>
         </div>
-        ${responsible && `
+        ${responsible ? `
           <div class="task-info-row">
             <span>👷</span>
             <span><strong>${responsible}</strong></span>
           </div>
-        `}
+        ` : ''}
       </div>
     </div>
   `;
