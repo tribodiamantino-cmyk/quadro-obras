@@ -3,7 +3,8 @@
   "version": "1.2.4",
   "private": true,
   "scripts": {
-    "start": "node server-supabase.js",
+    "start": "node server-railway.js",
+    "start:supabase": "node server-supabase.js",
     "start:railway": "node server-railway.js",
     "dev": "nodemon --watch src --watch public --watch server-supabase.js server-supabase.js",
     "dev:railway": "nodemon --watch src --watch public --watch server-railway.js server-railway.js",
