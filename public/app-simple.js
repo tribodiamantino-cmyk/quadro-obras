@@ -261,6 +261,21 @@ async function loadFromServer(force = false) {
     
     const data = await res.json();
     
+    // DEBUG: Verificar se tarefas estão chegando
+    console.log('📊 DEBUG: Dados recebidos do servidor');
+    console.log(`   - Total de projetos: ${data.projects?.length || 0}`);
+    if (data.projects && data.projects.length > 0) {
+      const firstWithTasks = data.projects.find(p => p.tasks && p.tasks.length > 0);
+      if (firstWithTasks) {
+        console.log(`   - Projeto "${firstWithTasks.name}" tem ${firstWithTasks.tasks.length} tarefas`);
+      } else {
+        console.log('   ⚠️ NENHUM projeto tem tarefas!');
+      }
+      // Contar total de tarefas
+      const totalTasks = data.projects.reduce((sum, p) => sum + (p.tasks?.length || 0), 0);
+      console.log(`   - Total de tarefas em todos os projetos: ${totalTasks}`);
+    }
+    
     // Armazena TODOS os dados no cache
     state.allProjects = data.projects || [];
     state.stores = data.stores || [];
