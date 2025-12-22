@@ -1,444 +1,885 @@
-# 🛠️ Quadro de Obras - Sistema de Gestão v1.0# 🛠️ Quadro de Acompanhamento de Obras - v2.0
+# 🏗️ Quadro de Obras - Sistema de Gestão v2.0# 🛠️ Quadro de Obras - Sistema de Gestão v1.0# 🛠️ Quadro de Acompanhamento de Obras - v2.0
 
 
 
-Sistema completo de gestão de obras com controle de tarefas, usuários e integração em tempo real.Sistema completo de gerenciamento de obras com autenticação multi-tenant, controle de usuários e banco de dados PostgreSQL.
+Sistema completo de gerenciamento de obras com autenticação multi-tenant, controle de tarefas Kanban e atualizações em tempo real.
 
 
 
-## 🚀 Deploy em Produção## 🚀 Principais Funcionalidades
+[![Deploy no Railway](https://img.shields.io/badge/Deploy-Railway-blueviolet)](https://controle-obras.up.railway.app/)Sistema completo de gestão de obras com controle de tarefas, usuários e integração em tempo real.Sistema completo de gerenciamento de obras com autenticação multi-tenant, controle de usuários e banco de dados PostgreSQL.
+
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green)](https://nodejs.org/)
+
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-blue)](https://www.postgresql.org/)
 
 
 
-**URL:** https://quadro-obras-production.up.railway.app✅ **Autenticação JWT** - Sistema seguro de login/registro  
+---## 🚀 Deploy em Produção## 🚀 Principais Funcionalidades
 
-✅ **Multi-tenant** - Múltiplas organizações isoladas  
 
-**Credenciais:** `admin@admin.com` / `admin123`✅ **Controle de Acesso** - Roles: ADMIN, MEMBER, VIEWER  
 
-✅ **PostgreSQL** - Banco de dados robusto e escalável  
+## 🚀 Deploy em Produção
 
-## ✨ Funcionalidades✅ **Real-time** - Atualizações ao vivo via Socket.IO  
 
-✅ **Kanban** - Quadro visual de tarefas  
 
-- ✅ Gestão completa de projetos e tarefas✅ **Histórico** - Rastreamento completo de mudanças  
+**URL:** https://controle-obras.up.railway.app/**URL:** https://quadro-obras-production.up.railway.app✅ **Autenticação JWT** - Sistema seguro de login/registro  
 
-- ✅ Sistema Kanban com 5 status
 
-- ✅ Gerenciamento de usuários (3 níveis)---
 
-- ✅ Atualização em tempo real
+**Credenciais padrão:**✅ **Multi-tenant** - Múltiplas organizações isoladas  
 
-- ✅ Logs de auditoria## 📋 Pré-requisitos
+- Email: `admin@admin.com`
+
+- Senha: `admin123`**Credenciais:** `admin@admin.com` / `admin123`✅ **Controle de Acesso** - Roles: ADMIN, MEMBER, VIEWER  
+
+
+
+---✅ **PostgreSQL** - Banco de dados robusto e escalável  
+
+
+
+## ✨ Funcionalidades Principais## ✨ Funcionalidades✅ **Real-time** - Atualizações ao vivo via Socket.IO  
+
+
+
+### 🔐 Autenticação & Autorização✅ **Kanban** - Quadro visual de tarefas  
+
+- ✅ Sistema JWT seguro
+
+- ✅ Multi-tenant (organizações isoladas)- ✅ Gestão completa de projetos e tarefas✅ **Histórico** - Rastreamento completo de mudanças  
+
+- ✅ 3 níveis de acesso: ADMIN, MEMBER, VIEWER
+
+- ✅ Convites por email- ✅ Sistema Kanban com 5 status
+
+
+
+### 📊 Gestão de Obras- ✅ Gerenciamento de usuários (3 níveis)---
+
+- ✅ Cadastro completo de projetos
+
+- ✅ Filtros por loja, status, categoria- ✅ Atualização em tempo real
+
+- ✅ Campo de busca instantânea
+
+- ✅ Arquivamento de projetos- ✅ Logs de auditoria## 📋 Pré-requisitos
+
+- ✅ Ordenação customizável (drag & drop)
 
 - ✅ Multi-tenant
 
-- **Node.js** 18+ ([Download](https://nodejs.org/))
+### 📋 Kanban de Tarefas
 
-## 📦 Instalação- **PostgreSQL** 14+ ou conta em:
+- ✅ 5 status: Criado → Em separação → Pendência → Em romaneio → Entregue- **Node.js** 18+ ([Download](https://nodejs.org/))
 
-  - [Supabase](https://supabase.com) (recomendado - grátis)
+- ✅ Drag & drop entre colunas
 
-```bash  - [Neon](https://neon.tech) (alternativa grátis)
+- ✅ Botões de navegação rápida## 📦 Instalação- **PostgreSQL** 14+ ou conta em:
 
-npm install  - Docker local
+- ✅ Criação de pendências
+
+- ✅ Histórico completo de movimentações  - [Supabase](https://supabase.com) (recomendado - grátis)
+
+
+
+### ⚡ Real-time```bash  - [Neon](https://neon.tech) (alternativa grátis)
+
+- ✅ Socket.IO para atualizações instantâneas
+
+- ✅ Cache inteligente com invalidação automáticanpm install  - Docker local
+
+- ✅ Sincronização entre múltiplos usuários
 
 cp .env.example .env
 
-# Configure .env---
+### 📝 Detalhes de Obra
 
-npm run dev
+- ✅ Cliente, loja, status# Configure .env---
 
-```## ⚡ Quick Start
+- ✅ Integrador, montador, eletricista
+
+- ✅ Datas de início e previsão de entreganpm run dev
+
+- ✅ Localização
+
+- ✅ Campo de observações```## ⚡ Quick Start
+
+- ✅ Categoria (Loja/GSI)
 
 
 
-## 🔧 Tecnologias### 1️⃣ Instalar Dependências
+### 📈 Auditoria
+
+- ✅ Logs de todas as ações## 🔧 Tecnologias### 1️⃣ Instalar Dependências
+
+- ✅ Rastreamento de mudanças
+
+- ✅ Histórico por projeto/tarefa
 
 
 
-- Node.js + Express```bash
+---- Node.js + Express```bash
 
-- Supabase (PostgreSQL)npm install
 
-- Socket.IO```
 
-- JWT
+## 📋 Pré-requisitos- Supabase (PostgreSQL)npm install
 
-### 2️⃣ Configurar Banco de Dados
 
-## 📝 Scripts
 
-#### Opção A: Supabase (Recomendado)
+- **Node.js** 18+ ([Download](https://nodejs.org/))- Socket.IO```
 
-```bash
+- **PostgreSQL** 14+ (Railway, Supabase, Neon ou local)
 
-npm start                    # Produção1. Criar conta em https://supabase.com
+- **Git** para controle de versão- JWT
+
+
+
+---### 2️⃣ Configurar Banco de Dados
+
+
+
+## 📦 Instalação## 📝 Scripts
+
+
+
+### 1. Clone o repositório#### Opção A: Supabase (Recomendado)
+
+
+
+```bash```bash
+
+git clone https://github.com/tribodiamantino-cmyk/quadro-obras.git
+
+cd quadro-obrasnpm start                    # Produção1. Criar conta em https://supabase.com
+
+```
 
 npm run dev                  # Desenvolvimento  2. Criar novo projeto
 
+### 2. Instale as dependências
+
 node scripts/add-user.js     # Adicionar usuário3. Copiar a **Connection String** em: `Settings > Database > Connection string > URI`
 
-```4. Substituir `[YOUR-PASSWORD]` pela senha do projeto
+```bash
+
+npm install```4. Substituir `[YOUR-PASSWORD]` pela senha do projeto
+
+```
 
 
+
+### 3. Configure as variáveis de ambiente
 
 Veja documentação completa em `docs/````bash
 
-# Exemplo de URL do Supabase
-DATABASE_URL="postgresql://postgres:SUA_SENHA@db.xxxxx.supabase.co:5432/postgres"
+```bash
+
+cp .env.example .env# Exemplo de URL do Supabase
+
+```DATABASE_URL="postgresql://postgres:SUA_SENHA@db.xxxxx.supabase.co:5432/postgres"
+
 ```
+
+Edite o arquivo `.env` com suas credenciais:
 
 #### Opção B: PostgreSQL Local (Docker)
 
-```bash
-# Subir PostgreSQL via Docker
+```env
+
+# Banco de dados (Railway PostgreSQL)```bash
+
+DATABASE_URL_RAILWAY="postgresql://usuario:senha@host:porta/database"# Subir PostgreSQL via Docker
+
 docker run --name quadro-postgres -e POSTGRES_PASSWORD=senha123 -p 5432:5432 -d postgres:15
 
-# Criar banco
+# JWT Secret (gere um aleatório)
+
+JWT_SECRET="seu_secret_key_aqui"# Criar banco
+
 docker exec -it quadro-postgres psql -U postgres -c "CREATE DATABASE quadro_obras;"
-```
+
+# Porta do servidor```
+
+PORT=3000
 
 ### 3️⃣ Configurar Variáveis de Ambiente
 
-```bash
-# Copiar arquivo de exemplo
+# Ambiente
+
+NODE_ENV=development```bash
+
+```# Copiar arquivo de exemplo
+
 cp .env.example .env
 
+### 4. Execute o servidor
+
 # Editar .env e adicionar sua DATABASE_URL
-```
 
-**Exemplo de `.env`:**
-
-```bash
-PORT=3000
-NODE_ENV=development
-
-# Sua URL do PostgreSQL
-DATABASE_URL="postgresql://postgres:senha123@localhost:5432/quadro_obras?schema=public"
-
-# Gere um secret seguro (use: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-JWT_SECRET=seu_secret_super_seguro_aqui_mude_isso
-
-JWT_EXPIRES_IN=7d
-CORS_ORIGIN=http://localhost:3000
-```
-
-### 4️⃣ Rodar Migrações do Prisma
-
-```bash
-# Cria as tabelas no banco
-npm run db:push
-
-# OU (para desenvolvimento com histórico de migrations)
-npm run db:migrate
-```
-
-### 5️⃣ Popular Banco com Dados
-
-#### Opção A: Migrar dados do `db.json` antigo
-
-```bash
-node prisma/migrate-from-json.js
-```
-
-Isso vai:
-- Ler seu `db.json` atual
-- Criar uma organização
-- Criar um usuário admin (`admin@empresa.com` / `admin123`)
-- Migrar todos os projetos e tarefas
-- Fazer backup do `db.json`
-
-#### Opção B: Criar dados de exemplo
-
-```bash
-npm run db:seed
-```
-
-Cria:
-- 2 organizações de exemplo
-- 3 usuários (ADMIN, MEMBER, VIEWER)
-- 2 projetos com tarefas
-
-### 6️⃣ Iniciar Servidor
-
-```bash
-# Produção
-npm start
+```bash```
 
 # Desenvolvimento (com auto-reload)
-npm run dev
+
+npm run dev:railway**Exemplo de `.env`:**
+
+
+
+# Produção```bash
+
+npm run startPORT=3000
+
+```NODE_ENV=development
+
+
+
+### 5. Acesse o sistema# Sua URL do PostgreSQL
+
+DATABASE_URL="postgresql://postgres:senha123@localhost:5432/quadro_obras?schema=public"
+
+Abra o navegador em: **http://localhost:3000**
+
+# Gere um secret seguro (use: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+
+---JWT_SECRET=seu_secret_super_seguro_aqui_mude_isso
+
+
+
+## 🗄️ Estrutura do Banco de DadosJWT_EXPIRES_IN=7d
+
+CORS_ORIGIN=http://localhost:3000
+
+### Tabelas Principais```
+
+
+
+#### `organizations`### 4️⃣ Rodar Migrações do Prisma
+
+Empresas/organizações (multi-tenant)
+
+- `id`, `name`, `slug````bash
+
+# Cria as tabelas no banco
+
+#### `users`npm run db:push
+
+Usuários do sistema
+
+- `id`, `email`, `password`, `name`, `role`, `organization_id`# OU (para desenvolvimento com histórico de migrations)
+
+- **Roles:** ADMIN, MEMBER, VIEWERnpm run db:migrate
+
 ```
 
-Acesse: **http://localhost:3000**
+#### `projects`
 
----
+Obras/projetos### 5️⃣ Popular Banco com Dados
+
+- `id`, `name`, `client_name`, `organization_id`
+
+- `store_id`, `work_status_id`, `category`#### Opção A: Migrar dados do `db.json` antigo
+
+- `integrator_id`, `assembler_id`, `electrician_id`
+
+- `start_date`, `delivery_forecast`, `location_address````bash
+
+- `observations`, `archived`, `display_order`node prisma/migrate-from-json.js
+
+```
+
+#### `tasks`
+
+Tarefas do KanbanIsso vai:
+
+- `id`, `title`, `status`, `project_id`, `organization_id`- Ler seu `db.json` atual
+
+- `responsible`, `display_order`, `created_at`- Criar uma organização
+
+- Criar um usuário admin (`admin@empresa.com` / `admin123`)
+
+#### Tabelas Auxiliares- Migrar todos os projetos e tarefas
+
+- `stores` - Lojas- Fazer backup do `db.json`
+
+- `work_statuses` - Status de obra
+
+- `integrators`, `assemblers`, `electricians` - Responsáveis#### Opção B: Criar dados de exemplo
+
+- `audit_logs` - Histórico de ações
+
+```bash
+
+---npm run db:seed
+
+```
+
+## 🛠️ Scripts Disponíveis
+
+Cria:
+
+### Desenvolvimento- 2 organizações de exemplo
+
+```bash- 3 usuários (ADMIN, MEMBER, VIEWER)
+
+npm run dev:railway    # Servidor com auto-reload (Railway)- 2 projetos com tarefas
+
+npm run dev            # Servidor com auto-reload (Supabase)
+
+```### 6️⃣ Iniciar Servidor
+
+
+
+### Produção```bash
+
+```bash# Produção
+
+npm run start          # Iniciar servidor (Railway)npm start
+
+npm run prod:railway   # Produção com NODE_ENV=production
+
+```# Desenvolvimento (com auto-reload)
+
+npm run dev
+
+### Banco de Dados```
+
+```bash
+
+npm run db:migrate     # Executar migrações PrismaAcesse: **http://localhost:3000**
+
+npm run db:studio      # Abrir Prisma Studio (interface visual)
+
+npm run db:seed        # Popular banco com dados de exemplo---
+
+```
 
 ## 🔐 Autenticação
 
-### Registrar Nova Organização
+### Utilitários
 
-```bash
-POST /api/auth/register
-Content-Type: application/json
+```bash### Registrar Nova Organização
 
-{
+npm run backup         # Fazer backup do banco
+
+npm run logs           # Visualizar logs de auditoria```bash
+
+npm test               # Testar se Node.js está funcionandoPOST /api/auth/register
+
+```Content-Type: application/json
+
+
+
+---{
+
   "email": "admin@minhaempresa.com",
-  "password": "senha_segura_123",
+
+## 🏗️ Arquitetura  "password": "senha_segura_123",
+
   "name": "João Silva",
-  "organizationName": "Minha Construtora Ltda"
-}
-```
 
-**Resposta:**
-```json
+### Backend  "organizationName": "Minha Construtora Ltda"
+
+- **Node.js** + **Express.js**}
+
+- **PostgreSQL** (Railway)```
+
+- **Socket.IO** para real-time
+
+- **JWT** para autenticação**Resposta:**
+
+- **bcryptjs** para senhas```json
+
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": "clx...",
-    "email": "admin@minhaempresa.com",
-    "name": "João Silva",
+
+### Frontend  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+
+- Vanilla JavaScript (ES6+)  "user": {
+
+- HTML5 + CSS3    "id": "clx...",
+
+- Socket.IO Client    "email": "admin@minhaempresa.com",
+
+- Drag & Drop API nativa    "name": "João Silva",
+
     "role": "ADMIN",
-    "organizationId": "clx...",
+
+### Estrutura de Pastas    "organizationId": "clx...",
+
     "organizationName": "Minha Construtora Ltda",
-    "organizationSlug": "minha-construtora-ltda"
-  }
-}
-```
 
-### Fazer Login
+```    "organizationSlug": "minha-construtora-ltda"
 
-```bash
-POST /api/auth/login
-Content-Type: application/json
+quadro-obras/  }
 
-{
-  "email": "admin@minhaempresa.com",
-  "password": "senha_segura_123"
-}
-```
+├── server-railway.js          # Servidor principal (Railway)}
 
-### Usar Token nas Requests
+├── server-supabase.js         # Servidor alternativo (Supabase)```
 
-```bash
-GET /api/state
-Authorization: Bearer SEU_TOKEN_AQUI
-```
+├── package.json               # Dependências
 
----
+├── prisma/### Fazer Login
 
-## 👥 Roles e Permissões
+│   └── schema.prisma          # Schema do banco
 
-| Role | Criar/Editar | Deletar | Convidar Usuários |
+├── src/```bash
+
+│   ├── controllers/           # Lógica de negócioPOST /api/auth/login
+
+│   ├── routes/                # Rotas da APIContent-Type: application/json
+
+│   ├── middleware/            # Autenticação e validação
+
+│   └── utils/                 # Funções auxiliares{
+
+├── public/                    # Frontend estático  "email": "admin@minhaempresa.com",
+
+│   ├── index.html             # Dashboard principal  "password": "senha_segura_123"
+
+│   ├── login.html             # Tela de login}
+
+│   ├── register.html          # Tela de registro```
+
+│   ├── settings.html          # Configurações
+
+│   ├── app-simple.js          # Lógica do frontend### Usar Token nas Requests
+
+│   ├── auth.js                # Autenticação frontend
+
+│   └── style.css              # Estilos```bash
+
+├── scripts/                   # Scripts de manutençãoGET /api/state
+
+└── docs/                      # Documentação adicionalAuthorization: Bearer SEU_TOKEN_AQUI
+
+``````
+
+
+
+------
+
+
+
+## 🔐 Autenticação## 👥 Roles e Permissões
+
+
+
+### Registro de Novo Usuário| Role | Criar/Editar | Deletar | Convidar Usuários |
+
 |------|--------------|---------|-------------------|
-| **ADMIN** | ✅ | ✅ | ✅ |
-| **MEMBER** | ✅ | ✅ | ❌ |
-| **VIEWER** | ❌ | ❌ | ❌ |
 
----
+```javascript| **ADMIN** | ✅ | ✅ | ✅ |
 
-## 📡 API Endpoints
+POST /api/auth/register| **MEMBER** | ✅ | ✅ | ❌ |
 
-### Auth
+{| **VIEWER** | ❌ | ❌ | ❌ |
 
-```
+  "email": "usuario@exemplo.com",
+
+  "password": "senha123",---
+
+  "name": "Nome do Usuário",
+
+  "organizationName": "Nome da Empresa"## 📡 API Endpoints
+
+}
+
+```### Auth
+
+
+
+### Login```
+
 POST   /api/auth/register      - Criar nova organização + admin
-POST   /api/auth/login         - Fazer login
-GET    /api/auth/me            - Dados do usuário autenticado
-POST   /api/auth/invite        - Convidar usuário (ADMIN only)
-```
 
-### Projects
+```javascriptPOST   /api/auth/login         - Fazer login
 
-```
-GET    /api/state              - Buscar todos os projetos e tarefas
-POST   /api/project            - Criar projeto
-PATCH  /api/project/:id        - Atualizar projeto
-DELETE /api/project/:id        - Deletar projeto (ADMIN only)
-```
+POST /api/auth/loginGET    /api/auth/me            - Dados do usuário autenticado
 
-### Tasks
+{POST   /api/auth/invite        - Convidar usuário (ADMIN only)
 
-```
-POST   /api/task               - Criar tarefa
+  "email": "usuario@exemplo.com",```
+
+  "password": "senha123"
+
+}### Projects
+
+
+
+// Retorna:```
+
+{GET    /api/state              - Buscar todos os projetos e tarefas
+
+  "token": "jwt_token",POST   /api/project            - Criar projeto
+
+  "user": {PATCH  /api/project/:id        - Atualizar projeto
+
+    "id": "...",DELETE /api/project/:id        - Deletar projeto (ADMIN only)
+
+    "email": "...",```
+
+    "name": "...",
+
+    "role": "ADMIN"### Tasks
+
+  }
+
+}```
+
+```POST   /api/task               - Criar tarefa
+
 PATCH  /api/task/:id           - Atualizar tarefa
-DELETE /api/task/:id           - Deletar tarefa
-POST   /api/task/:id/duplicate-pending
-POST   /api/task/:id/advance-with-pending
-POST   /api/tasks/batch-copy
+
+O token deve ser enviado em todas as requisições protegidas:DELETE /api/task/:id           - Deletar tarefa
+
+```POST   /api/task/:id/duplicate-pending
+
+Authorization: Bearer <token>POST   /api/task/:id/advance-with-pending
+
+```POST   /api/tasks/batch-copy
+
 POST   /api/tasks/batch-delete
+
+---```
+
+
+
+## 📡 API Endpoints---
+
+
+
+### Projetos## 🗄️ Comandos Úteis do Prisma
+
+
+
+``````bash
+
+GET    /api/projects/state      # Estado completo (projetos + tarefas)# Ver banco no navegador
+
+GET    /api/projects             # Lista de projetosnpm run db:studio
+
+GET    /api/projects/:id         # Detalhes de um projeto
+
+POST   /api/projects             # Criar projeto# Criar migration
+
+PUT    /api/projects/:id         # Atualizar projetonpm run db:migrate
+
+DELETE /api/projects/:id         # Excluir projeto
+
+PUT    /api/projects/:id/archive # Arquivar/desarquivar# Aplicar schema sem migration
+
+POST   /api/projects/reorder     # Reordenar projetosnpm run db:push
+
 ```
-
----
-
-## 🗄️ Comandos Úteis do Prisma
-
-```bash
-# Ver banco no navegador
-npm run db:studio
-
-# Criar migration
-npm run db:migrate
-
-# Aplicar schema sem migration
-npm run db:push
 
 # Popular banco
-npm run db:seed
 
-# Resetar banco (CUIDADO!)
-npx prisma migrate reset
+### Tarefasnpm run db:seed
+
+
+
+```# Resetar banco (CUIDADO!)
+
+GET    /api/projects/:id/tasks   # Tarefas de um projetonpx prisma migrate reset
+
+POST   /api/tasks                # Criar tarefa```
+
+PUT    /api/tasks/:id            # Atualizar tarefa
+
+DELETE /api/tasks/:id            # Excluir tarefa---
+
+PUT    /api/tasks/:id/move       # Mover tarefa (Kanban)
+
+POST   /api/tasks/reorder        # Reordenar tarefas## 🐳 Deploy com Docker
+
 ```
-
----
-
-## 🐳 Deploy com Docker
 
 ```dockerfile
-# Dockerfile
+
+### Dados Auxiliares# Dockerfile
+
 FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-RUN npx prisma generate
-EXPOSE 3000
-CMD ["npm", "start"]
+
+```WORKDIR /app
+
+GET /api/stores                  # Lista de lojasCOPY package*.json ./
+
+GET /api/work-statuses           # Status de obraRUN npm ci --only=production
+
+GET /api/integrators             # IntegradoresCOPY . .
+
+GET /api/assemblers              # MontadoresRUN npx prisma generate
+
+GET /api/electricians            # EletricistasEXPOSE 3000
+
+```CMD ["npm", "start"]
+
 ```
 
-```bash
-# Build
-docker build -t quadro-obras .
+### Autenticação
 
-# Run
-docker run -p 3000:3000 \
+```bash
+
+```# Build
+
+POST /api/auth/register          # Criar contadocker build -t quadro-obras .
+
+POST /api/auth/login             # Login
+
+GET  /api/auth/me                # Dados do usuário logado# Run
+
+```docker run -p 3000:3000 \
+
   -e DATABASE_URL="postgresql://..." \
-  -e JWT_SECRET="..." \
+
+---  -e JWT_SECRET="..." \
+
   quadro-obras
+
+## 🔌 Socket.IO Events```
+
+
+
+### Emitidos pelo servidor---
+
+
+
+```javascript## 🌍 Deploy em Produção
+
+// Projetos
+
+'project:created'   // Novo projeto criado### Vercel (Recomendado)
+
+'project:updated'   // Projeto atualizado
+
+'project:deleted'   // Projeto excluído1. Conectar repositório no Vercel
+
+'project:archived'  // Projeto arquivado/desarquivado2. Adicionar variáveis de ambiente:
+
+   - `DATABASE_URL`
+
+// Tarefas   - `JWT_SECRET`
+
+'task:created'      // Nova tarefa criada   - `NODE_ENV=production`
+
+'task:updated'      // Tarefa atualizada3. Deploy automático! ✨
+
+'task:deleted'      // Tarefa excluída
+
+'task:moved'        // Tarefa movida (status alterado)### Railway
+
 ```
 
----
-
-## 🌍 Deploy em Produção
-
-### Vercel (Recomendado)
-
-1. Conectar repositório no Vercel
-2. Adicionar variáveis de ambiente:
-   - `DATABASE_URL`
-   - `JWT_SECRET`
-   - `NODE_ENV=production`
-3. Deploy automático! ✨
-
-### Railway
-
 ```bash
-# Instalar CLI
+
+### Cliente ouve os eventos# Instalar CLI
+
 npm i -g @railway/cli
 
-# Login e deploy
-railway login
-railway init
-railway up
-```
+```javascript
 
-### Render
+socket.on('task:created', (task) => {# Login e deploy
+
+  // Adicionar tarefa na UIrailway login
+
+});railway init
+
+railway up
+
+socket.on('task:moved', (data) => {```
+
+  // Atualizar posição da tarefa
+
+});### Render
+
+```
 
 1. Criar Web Service
-2. Conectar repo
+
+---2. Conectar repo
+
 3. Build: `npm install && npx prisma generate && npx prisma db push`
-4. Start: `npm start`
 
----
+## 🎨 Temas4. Start: `npm start`
 
-## 🔧 Troubleshooting
 
-### Erro: "Environment variable not found: DATABASE_URL"
 
-```bash
-# Certifique-se que o .env existe e está correto
-cat .env
+O sistema possui **tema escuro** (padrão) com cores customizáveis.---
+
+
+
+**Paleta de cores:**## 🔧 Troubleshooting
+
+- Background: `#0f172a` (dark blue)
+
+- Cards: `#1e293b`### Erro: "Environment variable not found: DATABASE_URL"
+
+- Texto: `#ecf0f1`
+
+- Accent: `#3498db````bash
+
+- Success: `#2ecc71`# Certifique-se que o .env existe e está correto
+
+- Warning: `#f39c12`cat .env
+
+- Danger: `#e74c3c`
 
 # Regenerar Prisma Client
-npx prisma generate
+
+---npx prisma generate
+
 ```
+
+## 🚀 Deploy
 
 ### Erro: "Can't reach database server"
 
+### Railway (Recomendado)
+
 ```bash
-# Teste a conexão
-npx prisma db pull
 
-# Verifique se PostgreSQL está rodando
-docker ps  # se usando Docker
-```
+1. Crie conta no [Railway](https://railway.app/)# Teste a conexão
 
-### Erro: "Invalid token" no frontend
+2. Conecte seu repositório GitHubnpx prisma db pull
 
-- Verifique se o token está sendo enviado no header `Authorization: Bearer TOKEN`
+3. Adicione um PostgreSQL Database
+
+4. Configure as variáveis de ambiente:# Verifique se PostgreSQL está rodando
+
+   - `DATABASE_URL_RAILWAY` (gerado automaticamente)docker ps  # se usando Docker
+
+   - `JWT_SECRET````
+
+   - `PORT=3000`
+
+5. Deploy automático a cada push!### Erro: "Invalid token" no frontend
+
+
+
+### Outras Plataformas- Verifique se o token está sendo enviado no header `Authorization: Bearer TOKEN`
+
 - Certifique-se que `JWT_SECRET` é o mesmo em todos os ambientes
-- Token pode ter expirado (padrão: 7 dias)
 
----
+- **Heroku:** Configure o Procfile e PostgreSQL addon- Token pode ter expirado (padrão: 7 dias)
 
-## 📊 Estrutura do Projeto
+- **Render:** Configure web service + PostgreSQL
 
-```
+- **Vercel:** Para frontend estático (mude backend para serverless)---
+
+
+
+---## 📊 Estrutura do Projeto
+
+
+
+## 🧪 Testes```
+
 quadro-obras/
-├── prisma/
-│   ├── schema.prisma           # Definição do banco
-│   ├── seed.js                 # Dados de exemplo
+
+```bash├── prisma/
+
+# Testar conexão do banco│   ├── schema.prisma           # Definição do banco
+
+node debug-tasks.js│   ├── seed.js                 # Dados de exemplo
+
 │   └── migrate-from-json.js    # Migração do db.json antigo
-├── src/
-│   ├── controllers/
+
+# Verificar dados├── src/
+
+node scripts/check-data.js│   ├── controllers/
+
 │   │   ├── auth.controller.js
-│   │   └── projects.controller.js
-│   ├── middleware/
-│   │   └── auth.js             # JWT middleware
+
+# Backup do banco│   │   └── projects.controller.js
+
+node scripts/backup-database.js│   ├── middleware/
+
+```│   │   └── auth.js             # JWT middleware
+
 │   └── routes/
-│       ├── auth.routes.js
+
+---│       ├── auth.routes.js
+
 │       └── projects.routes.js
-├── public/
+
+## 📚 Documentação Adicional├── public/
+
 │   ├── index.html
-│   ├── app.js                  # Frontend
-│   └── style.css
-├── server-new.js               # Servidor principal
+
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Arquitetura detalhada│   ├── app.js                  # Frontend
+
+- **[API.md](docs/API.md)** - Referência completa da API│   └── style.css
+
+- **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** - Guia de deploy├── server-new.js               # Servidor principal
+
 ├── package.json
-└── .env                        # Variáveis de ambiente
+
+---└── .env                        # Variáveis de ambiente
+
 ```
+
+## 🤝 Contribuindo
 
 ---
 
-## 🔄 Migração da Versão Antiga
+1. Fork o projeto
 
-Se você já tem dados no `db.json`:
+2. Crie uma branch para sua feature (`git checkout -b feature/MinhaFeature`)## 🔄 Migração da Versão Antiga
+
+3. Commit suas mudanças (`git commit -m 'Add: MinhaFeature'`)
+
+4. Push para a branch (`git push origin feature/MinhaFeature`)Se você já tem dados no `db.json`:
+
+5. Abra um Pull Request
 
 ```bash
-# 1. Fazer backup
+
+---# 1. Fazer backup
+
 cp db.json db.json.backup
 
-# 2. Rodar migração
-node prisma/migrate-from-json.js
+## 📄 Licença
 
-# 3. Verificar dados
+# 2. Rodar migração
+
+Este projeto é proprietário. Todos os direitos reservados.node prisma/migrate-from-json.js
+
+
+
+---# 3. Verificar dados
+
 npm run db:studio
 
+## 👥 Autor
+
 # 4. Renomear server
-mv server.js server-old.js
+
+Desenvolvido por **Tribo Diamantino CMYK**mv server.js server-old.js
+
 mv server-new.js server.js
 
+---
+
 # 5. Reiniciar
-npm start
+
+## 📞 Suportenpm start
+
 ```
 
-**Credenciais padrão após migração:**
-- Email: `admin@empresa.com`
+Para problemas ou dúvidas:
+
+- Abra uma [Issue](https://github.com/tribodiamantino-cmyk/quadro-obras/issues)**Credenciais padrão após migração:**
+
+- Email: suporte@exemplo.com- Email: `admin@empresa.com`
+
 - Senha: `admin123`
+
+---
 
 ⚠️ **IMPORTANTE:** Altere a senha após primeiro login!
 
----
+**Versão:** 2.0  
+
+**Última atualização:** Dezembro 2025---
+
 
 ## 🆘 Suporte
 
