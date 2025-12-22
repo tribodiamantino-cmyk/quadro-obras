@@ -345,9 +345,15 @@ function applyLocalFilters() {
   // Atualiza projeto atual se necessário
   if (currentProjectId) {
     state.currentProject = state.allProjects.find(p => p.id === currentProjectId);
+    // CORREÇÃO: Carregar tarefas do projeto atual
+    if (state.currentProject) {
+      state.tasks = state.currentProject.tasks || [];
+    }
   } else if (filtered.length > 0) {
     state.currentProject = filtered[0];
     currentProjectId = filtered[0].id;
+    // CORREÇÃO: Carregar tarefas do primeiro projeto
+    state.tasks = filtered[0].tasks || [];
   }
   
   // Renderiza apenas a lista (não os filtros - já estão renderizados)
