@@ -525,9 +525,7 @@ function renderProjectsList() {
     return `
       <div class="project-item ${p.id === currentProjectId ? 'active' : ''} ${isArchived ? 'archived' : ''}" 
            onclick="selectProject('${p.id}')"
-           ondblclick="event.stopPropagation(); openCardDetailsModal('${p.id}')"
-           style="border-left: 4px solid ${statusColor}; ${isArchived ? 'opacity: 0.6;' : ''} cursor: pointer;"
-           title="Duplo-clique para ver detalhes e histórico">
+           style="border-left: 4px solid ${statusColor}; ${isArchived ? 'opacity: 0.6;' : ''} cursor: pointer;">
         <div style="font-size: 11px; color: #95a5a6; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
           <span>🏪 ${storeCode} ${isArchived ? '📦' : ''}</span>
           <span style="background: #374151; padding: 2px 6px; border-radius: 3px; font-size: 10px;">${categoryIcon} ${categoryText}</span>
@@ -546,6 +544,9 @@ function renderProjectsList() {
         
         <!-- Botões de ação -->
         <div class="project-actions">
+          <button class="btn-expand" onclick="event.stopPropagation(); openCardDetailsModal('${p.id}')" title="Ver detalhes e histórico" style="background: #3b82f6; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px;">
+            📋 Detalhes
+          </button>
           ${isArchived ? 
             `<button class="btn-delete-permanent" onclick="event.stopPropagation(); deletePermanent('${p.id}')" title="Excluir definitivamente">
               🗑️ Excluir
