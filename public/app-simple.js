@@ -278,6 +278,29 @@ async function loadFromServer(force = false) {
     
     // Armazena TODOS os dados no cache
     state.allProjects = data.projects || [];
+    // Normalizar campos de data para formato YYYY-MM-DD -> garante consistência entre endpoints
+    const dateFieldsToNormalize = ['start_date', 'delivery_forecast', 'assembler_start_date', 'electrician_start_date', 'gsi_forecast_date', 'gsi_actual_date'];
+    state.allProjects = (state.allProjects || []).map(p => {
+      const copy = { ...p };
+      dateFieldsToNormalize.forEach(f => {
+        const v = copy[f];
+        if (v) {
+          try {
+            const d = new Date(v);
+            if (!isNaN(d.getTime())) {
+              copy[f] = d.toISOString().split('T')[0];
+            } else {
+              copy[f] = null;
+            }
+          } catch {
+            copy[f] = null;
+          }
+        } else {
+          copy[f] = null;
+        }
+      });
+      return copy;
+    });
     state.stores = data.stores || [];
     state.workStatuses = data.workStatuses || [];
     state.integrators = data.integrators || [];
