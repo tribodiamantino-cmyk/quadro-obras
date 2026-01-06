@@ -689,6 +689,65 @@
     });
   </script>
 
+  <!-- Modal de Detalhes do Card -->
+  <div id="card-details-modal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+      <div class="modal-header">
+        <h2>📋 Detalhes da Obra</h2>
+        <button class="modal-close" onclick="closeCardDetailsModal()">&times;</button>
+      </div>
+      
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <!-- Título editável -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px; font-weight: 600;">
+            NOME DA OBRA
+          </label>
+          <div id="card-title-display" style="padding: 12px; background: rgba(59, 130, 246, 0.1); border: 2px solid rgba(59, 130, 246, 0.3); border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;" 
+               onclick="editCardTitle()"
+               title="Clique para editar">
+            <span id="card-title-text">Nome da obra</span>
+            <span style="float: right; font-size: 14px; color: #94a3b8;">✏️</span>
+          </div>
+          <input type="text" id="card-title-input" 
+                 style="display: none; width: 100%; padding: 12px; background: #1e293b; border: 2px solid #3b82f6; border-radius: 8px; color: #ecf0f1; font-size: 16px; font-weight: 600;"
+                 onblur="saveCardTitle()"
+                 onkeypress="if(event.key === 'Enter') saveCardTitle()" />
+        </div>
+        
+        <!-- Campo de Notas -->
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 6px; font-weight: 600;">
+            NOTAS E DETALHES
+          </label>
+          <textarea id="card-notes" 
+                    rows="6" 
+                    placeholder="Adicione observações, pendências, contatos, etc..."
+                    style="width: 100%; padding: 12px; background: #1e293b; border: 1px solid #34495e; border-radius: 8px; color: #ecf0f1; font-size: 14px; font-family: inherit; resize: vertical;">
+          </textarea>
+          <button type="button" onclick="saveCardNotes()" 
+                  style="margin-top: 8px; padding: 8px 16px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
+            💾 Salvar Notas
+          </button>
+        </div>
+        
+        <!-- Histórico de Atividades -->
+        <div style="margin-top: 30px;">
+          <h3 style="font-size: 14px; color: #94a3b8; margin-bottom: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+            <span>📜</span>
+            HISTÓRICO DE ATIVIDADES
+          </h3>
+          <div id="card-activities" style="max-height: 300px; overflow-y: auto;">
+            <div style="text-align: center; padding: 20px; color: #6b7280;">
+              <div style="font-size: 32px; margin-bottom: 8px;">⏳</div>
+              Carregando atividades...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="auth.js"></script>
   <script src="app-simple.js"></script>

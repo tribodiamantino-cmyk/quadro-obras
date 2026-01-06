@@ -919,6 +919,131 @@ app.delete('/api/projects/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// ==================== NOVOS ENDPOINTS: ATIVIDADES E NOTAS ====================
+
+// Obter histórico de atividades de um projeto
+app.get('/api/projects/:id/activities', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const activities = await db.many(
+      `SELECT pa.*, u.name as user_name, u.email as user_email
+       FROM project_activities pa
+       LEFT JOIN users u ON pa.user_id = u.id
+       WHERE pa.project_id = $1
+       ORDER BY pa.created_at DESC
+       LIMIT 100`,
+      [id]
+    );
+    
+    res.json(activities);
+  } catch (error) {
+    console.error('Erro ao buscar atividades:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Adicionar atividade ao histórico
+app.post('/api/projects/:id/activities', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { activity_type, description, old_value, new_value, metadata } = req.body;
+    
+    const activity = await db.single(
+      `INSERT INTO project_activities 
+       (project_id, user_id, activity_type, description, old_value, new_value, metadata, organization_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [id, req.user.id, activity_type, description, old_value || null, new_value || null, 
+       metadata ? JSON.stringify(metadata) : null, req.user.organizationId]
+    );
+    
+    io.emit('project:activity', activity);
+    res.json(activity);
+  } catch (error) {
+    console.error('Erro ao criar atividade:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Atualizar notas do projeto
+app.patch('/api/projects/:id/notes', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { notes } = req.body;
+    
+    const project = await db.single(
+      `UPDATE projects
+       SET notes = $1, updated_at = NOW()
+       WHERE id = $2 AND organization_id = $3
+       RETURNING *`,
+      [notes, id, req.user.organizationId]
+    );
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Projeto não encontrado' });
+    }
+    
+    // Registrar atividade
+    await db.query(
+      `INSERT INTO project_activities 
+       (project_id, user_id, activity_type, description, organization_id)
+       VALUES ($1, $2, 'notes_updated', 'Notas atualizadas', $3)`,
+      [id, req.user.id, req.user.organizationId]
+    );
+    
+    io.emit('project:updated', project);
+    res.json(project);
+  } catch (error) {
+    console.error('Erro ao atualizar notas:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Atualizar título do projeto (com registro de atividade)
+app.patch('/api/projects/:id/title', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    
+    // Buscar título antigo
+    const oldProject = await db.single(
+      'SELECT name FROM projects WHERE id = $1 AND organization_id = $2',
+      [id, req.user.organizationId]
+    );
+    
+    if (!oldProject) {
+      return res.status(404).json({ message: 'Projeto não encontrado' });
+    }
+    
+    // Atualizar título
+    const project = await db.single(
+      `UPDATE projects
+       SET name = $1, updated_at = NOW()
+       WHERE id = $2 AND organization_id = $3
+       RETURNING *`,
+      [name, id, req.user.organizationId]
+    );
+    
+    // Registrar atividade
+    await db.query(
+      `INSERT INTO project_activities 
+       (project_id, user_id, activity_type, description, old_value, new_value, organization_id)
+       VALUES ($1, $2, 'title_changed', 'Título alterado', $3, $4, $5)`,
+      [id, req.user.id, oldProject.name, name, req.user.organizationId]
+    );
+    
+    io.emit('project:updated', project);
+    res.json(project);
+  } catch (error) {
+    console.error('Erro ao atualizar título:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ==================== FIM DOS NOVOS ENDPOINTS ====================
+
+
 // ==================== TASKS ====================
 
 // Criar tarefa (rota genérica)
