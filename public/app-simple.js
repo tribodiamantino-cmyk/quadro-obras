@@ -1955,6 +1955,16 @@ window.updateProjectField = async function(projectId, fieldName, fieldValue) {
     if (res.ok) {
       // Sucesso - não precisa fazer nada, já atualizamos localmente
       console.log(`✅ Campo ${fieldName} atualizado`);
+      // Se for um campo de data, forçar recarga do estado para garantir persistência
+      const dateFields = ['start_date', 'delivery_forecast', 'assembler_start_date', 'electrician_start_date'];
+      if (dateFields.includes(fieldName)) {
+        // Invalidar cache e recarregar do servidor (forçado)
+        clearCache();
+        await loadFromServer(true);
+        applyLocalFilters();
+        // Re-renderizar detalhes (garante o formato correto)
+        renderDetails();
+      }
     } else {
       // Erro - reverter alteração local
       const error = await res.json();
