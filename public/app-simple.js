@@ -732,6 +732,9 @@ function renderTasks() {
         <div class="task" draggable="true" data-id="${task.id}" data-status="${task.status}">
           <div class="task-title">${task.title}</div>
           <div class="task-actions">
+            <button class="btn-task-details" onclick="openCardDetailsModal('${task.project_id || currentProjectId}')" title="Ver detalhes e histórico" style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-right: 4px;">
+              📋
+            </button>
             ${canGoBack ? `<button class="btn-task-nav btn-prev" onclick="moveTask('${task.id}', 'prev')" title="Voltar">◀</button>` : ''}
             ${showPendingBtn ? `<button class="btn-task-pending" onclick="createPending('${task.id}')" title="Criar Pendência">P</button>` : ''}
             ${canGoNext ? `<button class="btn-task-nav btn-next" onclick="moveTask('${task.id}', 'next')" title="Avançar">▶</button>` : ''}
