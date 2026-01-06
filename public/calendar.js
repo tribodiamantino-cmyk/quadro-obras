@@ -273,17 +273,22 @@ function renderDayCell(year, month, day, isOtherMonth) {
   const dayEvents = filteredEvents.filter(e => e.date === dateStr);
   
   // Máximo de eventos a mostrar
-  const maxEventsToShow = 2;
+  const maxEventsToShow = 3;
   const eventsToShow = dayEvents.slice(0, maxEventsToShow);
   const moreCount = dayEvents.length - maxEventsToShow;
   
-  const eventsHTML = eventsToShow.map(e => `
-    <div class="day-event" style="background: ${e.color}30; color: ${e.color}">
-      ${getEventIcon(e.type)}
-    </div>
-  `).join('');
+  const eventsHTML = eventsToShow.map(e => {
+    // Truncar nome da obra para caber no calendário
+    const projectName = e.title.length > 12 ? e.title.substring(0, 12) + '...' : e.title;
+    return `
+      <div class="day-event" style="background: ${e.color}; border-left: 3px solid ${e.color}" title="${e.title} - ${e.typeLabel}">
+        <span class="event-icon">${getEventIcon(e.type)}</span>
+        <span class="event-name">${projectName}</span>
+      </div>
+    `;
+  }).join('');
   
-  const moreHTML = moreCount > 0 ? `<div class="day-event-more">+${moreCount}</div>` : '';
+  const moreHTML = moreCount > 0 ? `<div class="day-event-more">+${moreCount} mais</div>` : '';
   
   return `
     <div class="day ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}" data-date="${dateStr}">

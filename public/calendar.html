@@ -200,27 +200,31 @@
     .event-type-badge {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      font-size: 11px;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
-      opacity: 0.5;
+      opacity: 0.6;
     }
 
     .event-type-badge.active {
       opacity: 1;
       border-color: var(--badge-color);
-      background: color-mix(in srgb, var(--badge-color) 15%, transparent);
+      background: color-mix(in srgb, var(--badge-color) 20%, transparent);
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--badge-color) 30%, transparent);
     }
 
     .event-type-dot {
-      width: 8px;
-      height: 8px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
+      background: var(--badge-color);
+      box-shadow: 0 0 8px var(--badge-color);
     }
 
     /* Calendário Grid */
@@ -252,12 +256,14 @@
     }
 
     .day {
-      min-height: 70px;
+      min-height: 95px;
       padding: 6px;
       border: 1px solid rgba(255, 255, 255, 0.05);
       position: relative;
       cursor: pointer;
       transition: background 0.2s;
+      display: flex;
+      flex-direction: column;
     }
 
     .day:active {
@@ -274,36 +280,65 @@
     }
 
     .day-number {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      flex-shrink: 0;
+    }
+
+    .day-events {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .day-event {
+      font-size: 10px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      color: #fff;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .day-event:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .day-event .event-icon {
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+
+    .day-event .event-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 10px;
     }
 
     .day.today .day-number {
       color: #3b82f6;
     }
 
-    .day-events {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .day-event {
-      font-size: 9px;
-      padding: 2px 4px;
-      border-radius: 3px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      cursor: pointer;
-    }
-
     .day-event-more {
-      font-size: 9px;
-      color: #94a3b8;
+      font-size: 10px;
+      color: #64748b;
       text-align: center;
-      padding: 2px;
+      padding: 3px;
+      font-weight: 600;
     }
 
     /* Lista de eventos do dia */
