@@ -862,16 +862,6 @@ function renderDetails() {
     </select>
   `;
   
-  // Data Início Montagem (date input)
-  document.getElementById('detail-assembler-start').innerHTML = `
-    <input 
-      type="date" 
-      value="${formatDateForInput(p.assembler_start_date)}" 
-      onchange="updateProjectField('${p.id}', 'assembler_start_date', this.value)"
-      style="width: 100%; background: #1e293b; border: 1px solid #34495e; color: #ecf0f1; padding: 6px; border-radius: 4px; font-size: 12px;"
-    >
-  `;
-  
   // Eletricista (select)
   const electricianOptions = (state.electricians || []).map(e => 
     `<option value="${e.id}" ${e.id === p.electrician_id ? 'selected' : ''}>${e.name}</option>`
