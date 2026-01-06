@@ -346,6 +346,14 @@ app.get('/api/projects/state', authenticateToken, async (req, res) => {
     const currentProjectId = req.query.currentProjectId;
     const includeArchived = req.query.includeArchived === 'true';
     
+    // Helper para normalizar datas para formato YYYY-MM-DD
+    const formatDate = (dateValue) => {
+      if (!dateValue) return null;
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return null;
+      return date.toISOString().split('T')[0];
+    };
+    
     // Buscar todos os projetos (incluindo arquivados se solicitado)
     // Otimização: Uma única query com todos os JOINs
     const projects = await db.many(
@@ -353,6 +361,7 @@ app.get('/api/projects/state', authenticateToken, async (req, res) => {
               p.is_current, p.archived, p.category, p.client_name,
               p.integrator_id, p.assembler_id, p.electrician_id,
               p.start_date, p.delivery_forecast, 
+              p.assembler_start_date, p.electrician_start_date,
               p.gsi_forecast_date, p.gsi_actual_date, p.gsi_delivery_confirmed_at,
               p.location_lat, p.location_lng, p.location_address,
               p.organization_id, p.created_at, p.updated_at,
@@ -391,9 +400,17 @@ app.get('/api/projects/state', authenticateToken, async (req, res) => {
       tasksByProject[task.project_id].push(task);
     });
     
-    // Adicionar tarefas aos projetos
+    // Adicionar tarefas aos projetos e normalizar datas
     projects.forEach(project => {
       project.tasks = tasksByProject[project.id] || [];
+      
+      // Normalizar todos os campos de data para YYYY-MM-DD
+      project.start_date = formatDate(project.start_date);
+      project.delivery_forecast = formatDate(project.delivery_forecast);
+      project.assembler_start_date = formatDate(project.assembler_start_date);
+      project.electrician_start_date = formatDate(project.electrician_start_date);
+      project.gsi_forecast_date = formatDate(project.gsi_forecast_date);
+      project.gsi_actual_date = formatDate(project.gsi_actual_date);
     });
 
     // Buscar projeto atual se especificado
@@ -480,9 +497,25 @@ app.get('/api/projects', authenticateToken, async (req, res) => {
       tasksByProject[task.project_id].push(task);
     });
 
-    // Adicionar tarefas aos projetos
+    // Helper para normalizar datas para formato YYYY-MM-DD
+    const formatDate = (dateValue) => {
+      if (!dateValue) return null;
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return null;
+      return date.toISOString().split('T')[0];
+    };
+
+    // Adicionar tarefas aos projetos e normalizar datas
     projects.forEach(project => {
       project.tasks = tasksByProject[project.id] || [];
+      
+      // Normalizar todos os campos de data
+      project.start_date = formatDate(project.start_date);
+      project.delivery_forecast = formatDate(project.delivery_forecast);
+      project.assembler_start_date = formatDate(project.assembler_start_date);
+      project.electrician_start_date = formatDate(project.electrician_start_date);
+      project.gsi_forecast_date = formatDate(project.gsi_forecast_date);
+      project.gsi_actual_date = formatDate(project.gsi_actual_date);
     });
 
     res.json(projects);
@@ -515,6 +548,21 @@ app.get('/api/projects/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'Projeto não encontrado' });
     }
 
+    // Normalizar campos de data para YYYY-MM-DD
+    const formatDate = (dateValue) => {
+      if (!dateValue) return null;
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return null;
+      return date.toISOString().split('T')[0];
+    };
+    
+    project.start_date = formatDate(project.start_date);
+    project.delivery_forecast = formatDate(project.delivery_forecast);
+    project.assembler_start_date = formatDate(project.assembler_start_date);
+    project.electrician_start_date = formatDate(project.electrician_start_date);
+    project.gsi_forecast_date = formatDate(project.gsi_forecast_date);
+    project.gsi_actual_date = formatDate(project.gsi_actual_date);
+
     res.json(project);
   } catch (error) {
     console.error('Erro ao buscar projeto:', error);
@@ -524,12 +572,72 @@ app.get('/api/projects/:id', authenticateToken, async (req, res) => {
 
 app.post('/api/projects', authenticateToken, async (req, res) => {
   try {
+    const {
+      name,
+      clientName,
+      storeId,
+      workStatusId,
+      category,
+      integratorId,
+      assemblerId,
+      electricianId,
+      startDate,
+      deliveryForecast,
+      locationAddress,
+      gsiForecastDate
+    } = req.body;
+
     const project = await db.single(
-      `INSERT INTO projects (name, organization_id, is_current)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
-      [req.body.name, req.user.organizationId, false]
+      `INSERT INTO projects (
+        name, 
+        client_name, 
+        store_id, 
+        work_status_id, 
+        category, 
+        integrator_id, 
+        assembler_id, 
+        electrician_id,
+        start_date,
+        delivery_forecast,
+        location_address,
+        gsi_forecast_date,
+        organization_id, 
+        is_current
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      RETURNING *`,
+      [
+        name,
+        clientName,
+        storeId,
+        workStatusId,
+        category,
+        integratorId,
+        assemblerId,
+        electricianId,
+        startDate || null,
+        deliveryForecast || null,
+        locationAddress,
+        gsiForecastDate || null,
+        req.user.organizationId,
+        false
+      ]
     );
+
+    // Normalizar campos de data para YYYY-MM-DD
+    const formatDate = (dateValue) => {
+      if (!dateValue) return null;
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return null;
+      return date.toISOString().split('T')[0];
+    };
+    
+    if (project.start_date) project.start_date = formatDate(project.start_date);
+    if (project.delivery_forecast) project.delivery_forecast = formatDate(project.delivery_forecast);
+    if (project.assembler_start_date) project.assembler_start_date = formatDate(project.assembler_start_date);
+    if (project.electrician_start_date) project.electrician_start_date = formatDate(project.electrician_start_date);
+    if (project.gsi_forecast_date) project.gsi_forecast_date = formatDate(project.gsi_forecast_date);
+    if (project.gsi_actual_date) project.gsi_actual_date = formatDate(project.gsi_actual_date);
 
     io.emit('project:created', project);
     res.json(project);
@@ -591,6 +699,21 @@ app.patch('/api/projects/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'Projeto não encontrado' });
     }
 
+    // Normalizar campos de data para YYYY-MM-DD
+    const formatDate = (dateValue) => {
+      if (!dateValue) return null;
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return null;
+      return date.toISOString().split('T')[0];
+    };
+    
+    if (project.start_date) project.start_date = formatDate(project.start_date);
+    if (project.delivery_forecast) project.delivery_forecast = formatDate(project.delivery_forecast);
+    if (project.assembler_start_date) project.assembler_start_date = formatDate(project.assembler_start_date);
+    if (project.electrician_start_date) project.electrician_start_date = formatDate(project.electrician_start_date);
+    if (project.gsi_forecast_date) project.gsi_forecast_date = formatDate(project.gsi_forecast_date);
+    if (project.gsi_actual_date) project.gsi_actual_date = formatDate(project.gsi_actual_date);
+
     io.emit('project:updated', project);
     res.json(project);
   } catch (error) {
@@ -624,6 +747,21 @@ app.get('/api/projects/:id/details', authenticateToken, async (req, res) => {
     if (!project) {
       return res.status(404).json({ message: 'Projeto não encontrado' });
     }
+
+    // Normalizar campos de data para YYYY-MM-DD
+    const formatDate = (dateValue) => {
+      if (!dateValue) return null;
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) return null;
+      return date.toISOString().split('T')[0];
+    };
+    
+    project.start_date = formatDate(project.start_date);
+    project.delivery_forecast = formatDate(project.delivery_forecast);
+    project.assembler_start_date = formatDate(project.assembler_start_date);
+    project.electrician_start_date = formatDate(project.electrician_start_date);
+    project.gsi_forecast_date = formatDate(project.gsi_forecast_date);
+    project.gsi_actual_date = formatDate(project.gsi_actual_date);
 
     const tasks = await db.many(
       'SELECT * FROM tasks WHERE project_id = $1 ORDER BY created_at',
