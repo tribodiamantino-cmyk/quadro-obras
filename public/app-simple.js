@@ -525,7 +525,9 @@ function renderProjectsList() {
     return `
       <div class="project-item ${p.id === currentProjectId ? 'active' : ''} ${isArchived ? 'archived' : ''}" 
            onclick="selectProject('${p.id}')"
-           style="border-left: 4px solid ${statusColor}; ${isArchived ? 'opacity: 0.6;' : ''}">
+           ondblclick="event.stopPropagation(); openCardDetailsModal('${p.id}')"
+           style="border-left: 4px solid ${statusColor}; ${isArchived ? 'opacity: 0.6;' : ''} cursor: pointer;"
+           title="Duplo-clique para ver detalhes e histórico">
         <div style="font-size: 11px; color: #95a5a6; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
           <span>🏪 ${storeCode} ${isArchived ? '📦' : ''}</span>
           <span style="background: #374151; padding: 2px 6px; border-radius: 3px; font-size: 10px;">${categoryIcon} ${categoryText}</span>
@@ -1162,6 +1164,22 @@ document.getElementById('project-form').addEventListener('submit', async (e) => 
     });
     
     if (res.ok) {
+      const newProject = await res.json();
+      
+      // Registrar criação do projeto no histórico
+      try {
+        await api(`/api/projects/${newProject.id}/activities`, {
+          method: 'POST',
+          body: JSON.stringify({
+            activity_type: 'created',
+            description: `Obra criada: ${clientName}`
+          })
+        });
+      } catch (activityError) {
+        console.error('Erro ao registrar atividade de criação:', activityError);
+        // Não bloquear a criação por erro no log
+      }
+      
       closeProjectModal();
       await loadState();
     } else {
@@ -1906,6 +1924,25 @@ window.archiveProject = async function(projectId) {
     });
     
     if (res.ok) {
+      // Registrar arquivamento/restauração no histórico
+      try {
+        const activityType = isArchived ? 'restored' : 'archived';
+        const description = isArchived 
+          ? `Obra restaurada`
+          : `Obra arquivada`;
+          
+        await api(`/api/projects/${projectId}/activities`, {
+          method: 'POST',
+          body: JSON.stringify({
+            activity_type: activityType,
+            description: description
+          })
+        });
+      } catch (activityError) {
+        console.error('Erro ao registrar atividade:', activityError);
+        // Não bloquear a ação por erro no log
+      }
+      
       await loadState();
       alert(`Obra ${isArchived ? 'restaurada' : 'arquivada'} com sucesso!`);
     } else {
@@ -1921,12 +1958,36 @@ window.archiveProject = async function(projectId) {
 // Atualizar status da obra rapidamente
 window.updateProjectStatus = async function(projectId, newStatusId) {
   try {
+    // Capturar status antigo para registrar no histórico
+    const project = state.projects.find(p => p.id === projectId);
+    const oldStatusId = project?.work_status_id;
+    const oldStatusName = state.workStatuses?.find(s => s.id === oldStatusId)?.name;
+    const newStatusName = state.workStatuses?.find(s => s.id === newStatusId)?.name;
+    
     const res = await api(`/api/projects/${projectId}`, {
       method: 'PATCH',
       body: JSON.stringify({ work_status_id: newStatusId })
     });
     
     if (res.ok) {
+      // Registrar mudança de status no histórico
+      if (oldStatusId !== newStatusId && oldStatusName && newStatusName) {
+        try {
+          await api(`/api/projects/${projectId}/activities`, {
+            method: 'POST',
+            body: JSON.stringify({
+              activity_type: 'status_changed',
+              description: `Status alterado de "${oldStatusName}" para "${newStatusName}"`,
+              old_value: oldStatusName,
+              new_value: newStatusName
+            })
+          });
+        } catch (activityError) {
+          console.error('Erro ao registrar atividade:', activityError);
+          // Não bloquear a atualização por erro no log
+        }
+      }
+      
       await loadState();
     } else {
       const error = await res.json();
@@ -2475,3 +2536,200 @@ window.openDetailLocationInMaps = function() {
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
   window.open(mapsUrl, '_blank');
 };
+
+// ==================== MODAL DE DETALHES DO CARD ====================
+
+let currentCardId = null;
+
+// Abrir modal de detalhes
+window.openCardDetailsModal = async function(projectId) {
+  currentCardId = projectId;
+  const modal = document.getElementById('card-details-modal');
+  const project = state.projects.find(p => p.id === projectId);
+  
+  if (!project) return;
+  
+  // Preencher título
+  document.getElementById('card-title-text').textContent = project.name;
+  document.getElementById('card-title-input').value = project.name;
+  
+  // Preencher notas
+  document.getElementById('card-notes').value = project.notes || '';
+  
+  // Carregar atividades
+  await loadCardActivities(projectId);
+  
+  modal.classList.add('active');
+};
+
+// Fechar modal de detalhes
+window.closeCardDetailsModal = function() {
+  document.getElementById('card-details-modal').classList.remove('active');
+  currentCardId = null;
+};
+
+// Editar título inline
+window.editCardTitle = function() {
+  const display = document.getElementById('card-title-display');
+  const input = document.getElementById('card-title-input');
+  
+  display.style.display = 'none';
+  input.style.display = 'block';
+  input.focus();
+  input.select();
+};
+
+// Salvar título
+window.saveCardTitle = async function() {
+  const display = document.getElementById('card-title-display');
+  const input = document.getElementById('card-title-input');
+  const newTitle = input.value.trim();
+  
+  if (!newTitle || !currentCardId) {
+    input.value = document.getElementById('card-title-text').textContent;
+    display.style.display = 'block';
+    input.style.display = 'none';
+    return;
+  }
+  
+  try {
+    const res = await api(`/api/projects/${currentCardId}/title`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name: newTitle })
+    });
+    
+    if (res.ok) {
+      document.getElementById('card-title-text').textContent = newTitle;
+      
+      // Atualizar no estado local
+      const project = state.projects.find(p => p.id === currentCardId);
+      if (project) {
+        project.name = newTitle;
+      }
+      
+      // Recarregar atividades para mostrar a mudança
+      await loadCardActivities(currentCardId);
+      
+      // Atualizar lista de projetos
+      renderProjectsList();
+      
+      showToast('✓ Título atualizado com sucesso!');
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar título:', error);
+    showToast('✗ Erro ao atualizar título');
+  }
+  
+  display.style.display = 'block';
+  input.style.display = 'none';
+};
+
+// Salvar notas
+window.saveCardNotes = async function() {
+  if (!currentCardId) return;
+  
+  const notes = document.getElementById('card-notes').value.trim();
+  
+  try {
+    const res = await api(`/api/projects/${currentCardId}/notes`, {
+      method: 'PATCH',
+      body: JSON.stringify({ notes })
+    });
+    
+    if (res.ok) {
+      // Atualizar no estado local
+      const project = state.projects.find(p => p.id === currentCardId);
+      if (project) {
+        project.notes = notes;
+      }
+      
+      // Recarregar atividades
+      await loadCardActivities(currentCardId);
+      
+      showToast('✓ Notas salvas com sucesso!');
+    }
+  } catch (error) {
+    console.error('Erro ao salvar notas:', error);
+    showToast('✗ Erro ao salvar notas');
+  }
+};
+
+// Carregar atividades
+async function loadCardActivities(projectId) {
+  const container = document.getElementById('card-activities');
+  
+  try {
+    const res = await api(`/api/projects/${projectId}/activities`);
+    
+    if (!res.ok) {
+      container.innerHTML = '<div style="text-align: center; padding: 20px; color: #ef4444;"><div style="font-size: 32px; margin-bottom: 8px;">⚠️</div>Erro ao carregar atividades</div>';
+      return;
+    }
+    
+    const activities = await res.json();
+    
+    if (activities.length === 0) {
+      container.innerHTML = '<div style="text-align: center; padding: 20px; color: #6b7280;"><div style="font-size: 32px; margin-bottom: 8px;">📋</div>Nenhuma atividade registrada ainda</div>';
+      return;
+    }
+    
+    // Renderizar atividades
+    const icons = {
+      'created': '✨',
+      'moved': '➡️',
+      'title_changed': '✏️',
+      'status_changed': '🔄',
+      'archived': '📦',
+      'restored': '♻️',
+      'notes_updated': '📝'
+    };
+    
+    container.innerHTML = activities.map(activity => {
+      const date = new Date(activity.created_at);
+      const dateStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+      const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const icon = icons[activity.activity_type] || '📌';
+      
+      let html = `<div style="padding: 12px; background: rgba(255, 255, 255, 0.03); border-left: 3px solid #3b82f6; border-radius: 6px; margin-bottom: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 16px;">${icon}</span>
+            <span style="font-size: 13px; font-weight: 600; color: #ecf0f1;">${activity.user_name || 'Sistema'}</span>
+          </div>
+          <div style="font-size: 11px; color: #6b7280;">${dateStr} às ${timeStr}</div>
+        </div>
+        <div style="font-size: 13px; color: #94a3b8; margin-left: 28px;">${activity.description}</div>`;
+      
+      if (activity.old_value && activity.new_value) {
+        html += `<div style="font-size: 12px; color: #6b7280; margin-left: 28px; margin-top: 4px;">
+          <span style="text-decoration: line-through; opacity: 0.6;">${activity.old_value}</span>
+          →
+          <span style="color: #3b82f6; font-weight: 600;">${activity.new_value}</span>
+        </div>`;
+      }
+      
+      html += '</div>';
+      return html;
+    }).join('');
+    
+  } catch (error) {
+    console.error('Erro ao carregar atividades:', error);
+    container.innerHTML = '<div style="text-align: center; padding: 20px; color: #ef4444;"><div style="font-size: 32px; margin-bottom: 8px;">⚠️</div>Erro ao carregar atividades</div>';
+  }
+}
+
+// Toast de notificação
+function showToast(message) {
+  let toast = document.getElementById('toast-notification');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast-notification';
+    toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: #ecf0f1; padding: 12px 20px; border-radius: 8px; border-left: 4px solid #3b82f6; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; opacity: 0; transition: opacity 0.3s; font-size: 14px; max-width: 300px;';
+    document.body.appendChild(toast);
+  }
+  
+  toast.textContent = message;
+  toast.style.opacity = '1';
+  
+  setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+}
