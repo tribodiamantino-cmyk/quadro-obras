@@ -402,6 +402,15 @@ function render() {
   if (searchFilterAside) searchFilterAside.value = searchQuery;
   if (showArchivedCheckbox) showArchivedCheckbox.checked = showArchived;
   
+  // Debug: mostrar filtros ativos
+  console.log('🔍 Filtros ativos:', {
+    loja: selectedStoreId,
+    status: selectedStatusId,
+    categoria: selectedCategory,
+    busca: searchQuery,
+    arquivados: showArchived
+  });
+  
   renderProjectsList();
   renderProjectSelect();
   renderTasks();
@@ -417,8 +426,17 @@ function renderStoreFilter() {
       <option value="${store.id}">${store.code}</option>
     `).join('');
   
-  // Restaurar valor salvo do localStorage
-  storeFilterAside.value = selectedStoreId;
+  // Restaurar valor salvo do localStorage, mas validar se existe
+  const savedValue = selectedStoreId;
+  const optionExists = savedValue === 'all' || state.stores.some(s => s.id === savedValue);
+  if (optionExists) {
+    storeFilterAside.value = savedValue;
+  } else {
+    // Se o valor salvo não existe mais, resetar para 'all'
+    storeFilterAside.value = 'all';
+    selectedStoreId = 'all';
+    localStorage.setItem('filterStore', 'all');
+  }
 }
 
 // Renderizar filtro de status na sidebar
@@ -430,8 +448,17 @@ function renderStatusFilter() {
       <option value="${status.id}">${status.name}</option>
     `).join('');
   
-  // Restaurar valor salvo do localStorage
-  statusFilterAside.value = selectedStatusId;
+  // Restaurar valor salvo do localStorage, mas validar se existe
+  const savedValue = selectedStatusId;
+  const optionExists = savedValue === 'all' || state.workStatuses.some(s => s.id === savedValue);
+  if (optionExists) {
+    statusFilterAside.value = savedValue;
+  } else {
+    // Se o valor salvo não existe mais, resetar para 'all'
+    statusFilterAside.value = 'all';
+    selectedStatusId = 'all';
+    localStorage.setItem('filterStatus', 'all');
+  }
 }
 
 // Filtro de loja - INSTANTÂNEO (filtragem local)
@@ -2075,6 +2102,35 @@ window.archiveProject = async function(projectId) {
     console.error(`Erro ao ${action} obra:`, error);
     alert(`Erro ao ${action} obra`);
   }
+};
+
+// Limpar todos os filtros
+window.clearAllFilters = function() {
+  // Resetar valores
+  selectedStoreId = 'all';
+  selectedStatusId = 'all';
+  selectedCategory = 'all';
+  searchQuery = '';
+  showArchived = false;
+  
+  // Limpar localStorage
+  localStorage.removeItem('filterStore');
+  localStorage.removeItem('filterStatus');
+  localStorage.removeItem('filterCategory');
+  localStorage.removeItem('filterSearch');
+  localStorage.removeItem('filterShowArchived');
+  
+  // Atualizar UI
+  if (storeFilterAside) storeFilterAside.value = 'all';
+  if (statusFilterAside) statusFilterAside.value = 'all';
+  if (categoryFilterAside) categoryFilterAside.value = 'all';
+  if (searchFilterAside) searchFilterAside.value = '';
+  if (showArchivedCheckbox) showArchivedCheckbox.checked = false;
+  
+  // Reaplicar filtros (vai mostrar tudo)
+  applyLocalFilters();
+  
+  showToast('✓ Filtros limpos', 'success');
 };
 
 // Atualizar status da obra rapidamente
