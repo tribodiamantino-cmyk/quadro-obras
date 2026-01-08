@@ -1473,6 +1473,31 @@ function setupDragAndDrop() {
       task.classList.remove('dragging');
       task.style.opacity = '1';
     });
+    
+    // NOVO: Drag over em outras tarefas para reordenar dentro da coluna
+    task.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const draggingTask = document.querySelector('.task.dragging');
+      if (!draggingTask || draggingTask === task) return;
+      
+      // Só permite reordenar se estiver na mesma coluna
+      const draggingParent = draggingTask.parentElement;
+      const targetParent = task.parentElement;
+      if (draggingParent !== targetParent) return;
+      
+      // Determinar se deve inserir antes ou depois
+      const rect = task.getBoundingClientRect();
+      const midpoint = rect.top + rect.height / 2;
+      const insertBefore = e.clientY < midpoint;
+      
+      if (insertBefore) {
+        targetParent.insertBefore(draggingTask, task);
+      } else {
+        targetParent.insertBefore(draggingTask, task.nextSibling);
+      }
+    });
   });
   
   columns.forEach(col => {
