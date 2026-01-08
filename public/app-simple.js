@@ -16,11 +16,11 @@ let state = {
 
 // Filtros locais (não chamam servidor)
 let currentProjectId = null;
-let selectedStoreId = 'all';
-let selectedStatusId = 'all';
-let selectedCategory = 'all';
-let searchQuery = '';
-let showArchived = false;
+let selectedStoreId = localStorage.getItem('filterStore') || 'all';
+let selectedStatusId = localStorage.getItem('filterStatus') || 'all';
+let selectedCategory = localStorage.getItem('filterCategory') || 'all';
+let searchQuery = localStorage.getItem('filterSearch') || '';
+let showArchived = localStorage.getItem('filterShowArchived') === 'true';
 
 // Cache control
 let cacheLoaded = false;
@@ -396,6 +396,12 @@ async function loadState() {
 function render() {
   renderStoreFilter();
   renderStatusFilter();
+  
+  // Restaurar filtros salvos
+  if (categoryFilterAside) categoryFilterAside.value = selectedCategory;
+  if (searchFilterAside) searchFilterAside.value = searchQuery;
+  if (showArchivedCheckbox) showArchivedCheckbox.checked = showArchived;
+  
   renderProjectsList();
   renderProjectSelect();
   renderTasks();
@@ -406,34 +412,33 @@ function render() {
 function renderStoreFilter() {
   if (!storeFilterAside) return;
   
-  const currentValue = storeFilterAside.value || 'all';
-  
   storeFilterAside.innerHTML = '<option value="all">Todas lojas</option>' + 
     (state.stores || []).map(store => `
       <option value="${store.id}">${store.code}</option>
     `).join('');
   
-  storeFilterAside.value = currentValue;
+  // Restaurar valor salvo do localStorage
+  storeFilterAside.value = selectedStoreId;
 }
 
 // Renderizar filtro de status na sidebar
 function renderStatusFilter() {
   if (!statusFilterAside) return;
   
-  const currentValue = statusFilterAside.value || 'all';
-  
   statusFilterAside.innerHTML = '<option value="all">Todos status</option>' + 
     (state.workStatuses || []).map(status => `
       <option value="${status.id}">${status.name}</option>
     `).join('');
   
-  statusFilterAside.value = currentValue;
+  // Restaurar valor salvo do localStorage
+  statusFilterAside.value = selectedStatusId;
 }
 
 // Filtro de loja - INSTANTÂNEO (filtragem local)
 if (storeFilterAside) {
   const handleStoreChange = () => {
     selectedStoreId = storeFilterAside.value;
+    localStorage.setItem('filterStore', selectedStoreId); // Salvar no localStorage
     applyLocalFilters(); // Instantâneo - não chama servidor!
   };
   storeFilterAside.addEventListener('change', handleStoreChange);
@@ -444,6 +449,7 @@ if (storeFilterAside) {
 if (statusFilterAside) {
   const handleStatusChange = () => {
     selectedStatusId = statusFilterAside.value;
+    localStorage.setItem('filterStatus', selectedStatusId); // Salvar no localStorage
     applyLocalFilters(); // Instantâneo - não chama servidor!
   };
   statusFilterAside.addEventListener('change', handleStatusChange);
@@ -454,6 +460,7 @@ if (statusFilterAside) {
 if (categoryFilterAside) {
   const handleCategoryChange = () => {
     selectedCategory = categoryFilterAside.value;
+    localStorage.setItem('filterCategory', selectedCategory); // Salvar no localStorage
     applyLocalFilters(); // Instantâneo - não chama servidor!
   };
   categoryFilterAside.addEventListener('change', handleCategoryChange);
@@ -464,6 +471,7 @@ if (categoryFilterAside) {
 if (showArchivedCheckbox) {
   showArchivedCheckbox.addEventListener('change', async () => {
     showArchived = showArchivedCheckbox.checked;
+    localStorage.setItem('filterShowArchived', showArchived ? 'true' : 'false'); // Salvar no localStorage
     if (showArchived) {
       // Se marcou "mostrar arquivados", precisa buscar do servidor
       await loadFromServer(true);
@@ -474,7 +482,10 @@ if (showArchivedCheckbox) {
 
 // Filtro de busca por nome - INSTANTÂNEO com debounce pequeno
 if (searchFilterAside) {
-  const debouncedFilter = debounce(() => applyLocalFilters(), 100); // 100ms apenas para digitar
+  const debouncedFilter = debounce(() => {
+    localStorage.setItem('filterSearch', searchQuery); // Salvar no localStorage
+    applyLocalFilters();
+  }, 100); // 100ms apenas para digitar
   const handleSearchChange = () => {
     searchQuery = searchFilterAside.value.trim();
     debouncedFilter();
@@ -730,7 +741,7 @@ function renderTasks() {
       
       return `
         <div class="task" draggable="true" data-id="${task.id}" data-status="${task.status}">
-          <div class="task-title">${task.title}</div>
+          <div class="task-title" onclick="editTaskTitle('${task.id}')" style="cursor: text;" title="Clique para editar">${task.title}</div>
           <div class="task-actions">
             <button class="btn-task-details" onclick="openCardDetailsModal('${task.project_id || currentProjectId}')" title="Ver detalhes e histórico" style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-right: 4px;">
               📋
@@ -1361,6 +1372,88 @@ window.deleteTask = async function(taskId) {
     clearCache(); // Invalidar cache após excluir tarefa
     showToast('✓ Tarefa excluída', 'success');
   }
+};
+
+// Editar título da tarefa inline
+window.editTaskTitle = function(taskId) {
+  const taskEl = document.querySelector(`.task[data-id="${taskId}"]`);
+  if (!taskEl) return;
+  
+  const titleEl = taskEl.querySelector('.task-title');
+  const currentTitle = titleEl.textContent;
+  
+  // Criar input para edição
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = currentTitle;
+  input.style.cssText = `
+    width: 100%;
+    background: #1e293b;
+    border: 2px solid #3b82f6;
+    color: #ecf0f1;
+    padding: 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+  `;
+  
+  // Substituir o texto pelo input
+  titleEl.textContent = '';
+  titleEl.appendChild(input);
+  input.focus();
+  input.select();
+  
+  // Função para salvar
+  const saveTitle = async () => {
+    const newTitle = input.value.trim();
+    
+    if (!newTitle) {
+      titleEl.textContent = currentTitle;
+      return;
+    }
+    
+    if (newTitle === currentTitle) {
+      titleEl.textContent = currentTitle;
+      return;
+    }
+    
+    try {
+      const res = await api(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ title: newTitle })
+      });
+      
+      if (res.ok) {
+        titleEl.textContent = newTitle;
+        
+        // Atualizar no estado local
+        const task = state.tasks.find(t => t.id === taskId);
+        if (task) task.title = newTitle;
+        
+        showToast('✓ Título atualizado');
+      } else {
+        titleEl.textContent = currentTitle;
+        showToast('✗ Erro ao atualizar', 'error');
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar título:', error);
+      titleEl.textContent = currentTitle;
+      showToast('✗ Erro ao atualizar', 'error');
+    }
+  };
+  
+  // Salvar ao pressionar Enter
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveTitle();
+    } else if (e.key === 'Escape') {
+      titleEl.textContent = currentTitle;
+    }
+  });
+  
+  // Salvar ao perder o foco
+  input.addEventListener('blur', saveTitle);
 };
 
 // Drag and Drop - OTIMIZADO
