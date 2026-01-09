@@ -954,7 +954,7 @@ app.post('/api/projects/:id/activities', authenticateToken, async (req, res) => 
        (project_id, user_id, activity_type, description, old_value, new_value, metadata, organization_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [id, req.user.id, activity_type, description, old_value || null, new_value || null, 
+      [id, req.user.userId, activity_type, description, old_value || null, new_value || null, 
        metadata ? JSON.stringify(metadata) : null, req.user.organizationId]
     );
     
@@ -989,7 +989,7 @@ app.patch('/api/projects/:id/notes', authenticateToken, async (req, res) => {
       `INSERT INTO project_activities 
        (project_id, user_id, activity_type, description, organization_id)
        VALUES ($1, $2, 'notes_updated', 'Notas atualizadas', $3)`,
-      [id, req.user.id, req.user.organizationId]
+      [id, req.user.userId, req.user.organizationId]
     );
     
     io.emit('project:updated', project);
@@ -1030,7 +1030,7 @@ app.patch('/api/projects/:id/title', authenticateToken, async (req, res) => {
       `INSERT INTO project_activities 
        (project_id, user_id, activity_type, description, old_value, new_value, organization_id)
        VALUES ($1, $2, 'title_changed', 'Título alterado', $3, $4, $5)`,
-      [id, req.user.id, oldProject.name, name, req.user.organizationId]
+      [id, req.user.userId, oldProject.name, name, req.user.organizationId]
     );
     
     io.emit('project:updated', project);
